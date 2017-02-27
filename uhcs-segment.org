@@ -1,0 +1,91 @@
+#+TITLE: Deep off-the-shelf pixelwise features for segmenting complex ultrahigh carbon steel microstructures
+#+AUTHOR: Brian L. DeCost, Toby Francis, Elizabeth A. Holm
+
+#+OPTIONS:   H:4 num:t toc:nil \n:nil @:t ::t |:t ^:t -:t f:t *:t <:t
+#+OPTIONS:   TeX:t LaTeX:t skip:nil d:nil todo:nil pri:nil tags:not-in-toc
+
+# use figure* environments for figures that should span both columns
+# #+LaTeX_CLASS_OPTIONS: [twocolumn]
+
+#+LATEX_HEADER: \usepackage{microtype}
+#+LATEX_HEADER: \usepackage[utf8]{inputenc}
+#+LATEX_HEADER: \usepackage[T1]{fontenc}
+#+LATEX_HEADER: \usepackage{subcaption}
+#+LATEX_HEADER: \graphicspath{{figures/}}
+
+#+BEGIN_ABSTRACT
+We apply a deep off-the-shelf convolutional neural network image representation to enable novel automated microstructure segmentation applications for complex microstructures typically evaluated manually and subjectively.
+We explore two microstructure segmentation tasks in an openly-available ultrahigh carbon steel microstructure dataset\cite{decost2017uhcshb}.
+#+END_ABSTRACT
+
+* Introduction
+Openly available microstructure dataset \cite{decost2017uhcshb,hecht2017}.
+
+Our primary contributions are:
+- Establishing two novel microstructure segmentation benchmark datasets
+- Connecting microstructure science to the deep semantic segmentation literature
+- Exploring novel means of expanding contemporary quantitative microstructure measurement techniques to more complex structures
+
+* Methods
+** Labeled segmentation datasets
+\begin{figure}[!htbp]
+  \centering
+  \begin{subfigure}[]{0.48\textwidth}
+  \includegraphics[width=\textwidth]{spheroidite}
+  \caption{}
+  \label{fig:spheroidite}
+  \end{subfigure}
+  \begin{subfigure}[]{0.48\textwidth}
+  \frame{
+  \includegraphics[width=\textwidth]{spheroiditelabels}}
+  \caption{}
+  \label{fig:spheroiditelabels}
+  \end{subfigure} \\
+  \begin{subfigure}[]{0.48\textwidth}
+  \includegraphics[width=\textwidth]{microconstituents}
+  \caption{}
+  \label{fig:microconstituents}
+  \end{subfigure}
+  \begin{subfigure}[]{0.48\textwidth}
+  \includegraphics[width=\textwidth]{microconstituentlabels}
+  \caption{}
+  \label{fig:microconstituentlabels}
+  \end{subfigure}
+  \caption{Annotated UHCS segmentation tasks: Spheroidite particle segmentation and complex microconstituent segmentation task. Panels (\subref{fig:spheroidite}) and (\subref{fig:spheroiditelabels}) show a micrograph and semiautomated annotations\cite{hecht2017} for spheroidized cementite. Panels (\subref{fig:microconstituents}) and (\subref{fig:microconstituentlabels}) illustrate a manually annotated complex microconstituent segmentation task, including grain boundary carbide (light blue), ferritic matrix (dark blue), spheroidite particles (yellow), and Widmanstätten cementite (red).}
+  \label{fig:segmentationtasks}
+\end{figure}
+
+*** Semi-automated spheroidite particle segmentation task
+*** Manual labeling for abstract microconstituent segmentation
+\begin{figure}[!htbp]
+  \frame{
+  \includegraphics[width=\textwidth]{hypercolumnschematic}}
+  \caption{We probably want a schematic of some sort illustrating the method?}
+  \label{fig:hypercolumnschematic}
+\end{figure}
+
+** Reduced hypercolumn CNN features with linear SVM
+
+* Results and Discussion
+** Spheroidite particle segmentation
+\begin{figure}[!htbp]
+  \includegraphics[draft,width=\textwidth]{spheroiditeresults}
+  \caption{Independent test set predictions for the spheroidite particle segmentation task.}
+  \label{fig:spheroiditeresults}
+\end{figure}
+** Abstract microconstituent segmentation
+\begin{figure}[!htbp]
+  \includegraphics[width=\textwidth]{microconstituentresults}
+  \caption{Independent test set predictions for the complex microconstituent segmentation task.}
+  \label{fig:microconstituentresults}
+\end{figure}
+* Conclusions
+
+\section*{Acknowledgements}
+We gratefully acknowledge funding for this work through National Science Foundation grants DMR-1307138 and DMR-1501830, and through the John and Claire Bertucci Foundation.
+The UHCS micrographs were graciously provided by Matthew Hecht, Yoosuf Picard, and Bryan Webler (CMU)\cite{decost2017uhcshb}.
+The open source software projects Scikit-Learn\cite{sklearn} and keras\cite{keras} were essential to this work.
+
+\bibliographystyle{unsrt}
+\bibliography{uhcs-segment}
+
