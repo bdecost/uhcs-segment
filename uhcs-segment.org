@@ -15,7 +15,8 @@
 
 #+BEGIN_ABSTRACT
 We apply a deep off-the-shelf convolutional neural network image representation to enable novel automated microstructure segmentation applications for complex microstructures typically evaluated manually and subjectively.
-We explore two microstructure segmentation tasks in an openly-available ultrahigh carbon steel microstructure dataset\cite{decost2017uhcshb}.
+We explore two microstructure segmentation tasks in an openly-available ultrahigh carbon steel microstructure dataset\cite{decost2017uhcshb}: segmenting cementite particles in the spheroidized matrix, and segmenting larger fields of view featuring grain boundary carbide, spheroidized particle matrix, particle-free grain boundary denuded zone, Widmanstätten cementite.
+We also demonstrate how these data-driven microstructure segmentation models can be combined to obtain empirical cementite particle size distributions from more complex micrographs containing multiple microconstituents.
 #+END_ABSTRACT
 
 * Introduction
@@ -57,33 +58,78 @@ Our primary contributions are:
 
 *** Semi-automated spheroidite particle segmentation task
 *** Manual labeling for abstract microconstituent segmentation
-\begin{figure}[!htbp]
-  \frame{
-  \includegraphics[width=\textwidth]{hypercolumnschematic}}
-  \caption{We probably want a schematic of some sort illustrating the method?}
-  \label{fig:hypercolumnschematic}
-\end{figure}
+
+*** Performance evaluation
+We report the standard evaluation metrics for semantic segmentation tasks: pixel accuracy (AC) and region intersection over union (IU), both for individual classes and averaged over all four microstructure classes.
+For each of these metrics, a higher score indicates better performance.
+The intersection over union metric $IU(c)$ for class $c$ is the ratio of correctly predicted pixels of class $c$ to the union of pixels with either ground truth or predicted class $c$:
+
+\begin{equation}
+IU(c) = \frac{\sum_i (o_i == c \land y_i == c)}{\sum_i (o_i == c \lor y_i == c) }
+\end{equation}
+
+where $\land$ denotes logical conjunction (logical and) and $\lor$ denotes inclusive disjunction (logical or), $o_i$ are the predictions for each pixel $i$, and $y_i$ are the ground truth labels for each pixel.
+
+For the spheroidite particle segmentation task, we also report performance metrics comparing particle size distributions obtained from the model predictions with those obtained from the ground truth annotations (as reported in \cite{hecht2017}.
+The PSD KS metric indicates failure rates for  the two-sample Kolmogorov-Smirnov test to each pair of model and ground truth PSDs (lower is better).
 
 ** Reduced hypercolumn CNN features with linear SVM
+#  To make the manuscript more compact, basically realize that this essentially duplicates Figure 1c and 1d, and add the corresponding Figure 1a and 1b panels to this one.
+\begin{figure}[!htbp]
+  \frame{
+  \includegraphics[width=\textwidth]{architecture}}
+  \caption{Inspiration: PixelNet.}
+  \label{fig:hypercolumnschematic}
+\end{figure}
 
 * Results and Discussion
 ** Spheroidite particle segmentation
 \begin{figure}[!htbp]
-  \includegraphics[draft,width=\textwidth]{spheroiditeresults}
+  \includegraphics[width=\textwidth]{spheroiditeresults}
   \caption{Independent test set predictions for the spheroidite particle segmentation task.}
   \label{fig:spheroiditeresults}
 \end{figure}
+
+#+CAPTION: Segmentation performance on validation sets
+#+NAME: tab:segmentationperf
+| model                            | AC | IU | PSD \chi^2 | PSD KS |
+|----------------------------------+----+----+------------+--------|
+| threshold                        |  0 |  0 |          0 |      0 |
+| thresholded blur\cite{hecht2017} |  0 |  0 |          0 |      0 |
+| VGG conv-{1_2,2_2,3_3,4_3,5_3}   |  0 |  0 |          0 |      0 |
+  
 ** Abstract microconstituent segmentation
+# big question: how many micrographs do I need to annotate to get good perf?
+# Should we try to answer this question in the current study, or down the road a bit?
+
 \begin{figure}[!htbp]
   \includegraphics[width=\textwidth]{microconstituentresults}
   \caption{Independent test set predictions for the complex microconstituent segmentation task.}
   \label{fig:microconstituentresults}
+\end{figure}
+
+
+#+CAPTION: IoU performance for each class in the validation sets
+#+NAME: tab:segmentationperf
+| model                          | network | denuded zone | matrix | widmanstätten | global AC |
+|--------------------------------+---------+--------------+--------+---------------+-----------|
+| VGG conv-{1_2,2_2,3_3,4_3,5_3} |       0 | 0            | 0      | 0             | 0         |
+
+
+** Combined segmentation models
+# note: change this to input, class predictions, masked particle predictions.
+# use the same micrographs as in the abstract microstructure segmentation task.
+\begin{figure}[!htbp]
+  \includegraphics[width=\textwidth]{chainedresults}
+  \caption{Independent test set predictions for spheroidite segmentation results in micrographs with multiple microconstituents.}
+  \label{fig:chainedresults}
 \end{figure}
 * Conclusions
 
 \section*{Acknowledgements}
 We gratefully acknowledge funding for this work through National Science Foundation grants DMR-1307138 and DMR-1501830, and through the John and Claire Bertucci Foundation.
 The UHCS micrographs were graciously provided by Matthew Hecht, Yoosuf Picard, and Bryan Webler (CMU)\cite{decost2017uhcshb}.
+The spheroidite annotations were graciously provided by Matthew Hecht and Txai Sibley.
 The open source software projects Scikit-Learn\cite{sklearn} and keras\cite{keras} were essential to this work.
 
 \bibliographystyle{unsrt}
