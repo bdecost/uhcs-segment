@@ -25,7 +25,7 @@ def image_tensor(image):
     x = np.expand_dims(x, axis=0)
     return preprocess_input(x)
 
-def reduced_hypercolumn(images, n_components=32):
+def reduced_hypercolumn(images, n_components=32, verbose=False):
     """ 
     hypercolumn features with block-wise PCA whitening
     extract multiple feature maps for multiple images
@@ -43,18 +43,23 @@ def reduced_hypercolumn(images, n_components=32):
     h_target, w_target = images[0].shape
 
     x_in = [image_tensor(im) for im in images]
+    if verbose:
+        print('computing feature maps')
     xx = model.predict(np.vstack(x_in))
 
     hc = []
     for feature_idx in range(len(layers)):
-        print('block {}'.format(feature_idx))
+        block = layers[feature_idx]
+        
+        if verbose:
+            print('reducing {} features'.format(block))
+            
         # reshape feature map into [feature, channels]
         b, nchan, h, w = xx[feature_idx].shape
         X = xx[feature_idx]
         ff = X.transpose(0,2,3,1) # to [batch, height, width, channels]
         ff = ff.reshape((-1, nchan)) # to [feature, channels]
     
-        block = layers[feature_idx]
         if ff.shape[0] > 1e6:
             choice = np.random.choice(ff.shape[0], size=1e6, replace=False)
             block_pca[block].fit(ff[choice])
@@ -68,6 +73,8 @@ def reduced_hypercolumn(images, n_components=32):
         xxpca = xxpca.transpose(0,3,1,2) # to batch, channels, height, width
     
         # interpolate each channel onto target size
+        if verbose:
+            print('interpolating {} features'.format(block))
         # preallocate output
         hc_block = np.zeros((b, n_components, h_target, w_target))
     
@@ -78,5 +85,5 @@ def reduced_hypercolumn(images, n_components=32):
             
         hc.append(hc_block)
     
-    hcc = np.concatenate(hc, axis=1)
-    return hcc
+    return np.concatenate(hc, axis=1)
+
