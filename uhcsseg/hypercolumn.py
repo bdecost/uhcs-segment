@@ -19,13 +19,21 @@ model = Model(
     output=list(map(lambda layer: cnn.get_layer(layer).output, layers))
 )
 
+# pull this state out for train and test runs...
+# reorganize this module into a class so multiple models can be used...
+n_components=32
+block_pca = {
+    layer: PCA(n_components=n_components, whiten=True) 
+    for layer in layers
+}
+
 def image_tensor(image):
     image3d = gray2rgb(image).astype(np.float32)
     x = 255*image3d.transpose((2,0,1))
     x = np.expand_dims(x, axis=0)
     return preprocess_input(x)
 
-def reduced_hypercolumn(images, n_components=32, verbose=False):
+def reduced_hypercolumn(images, n_components=32, verbose=False, train=False):
     """ 
     hypercolumn features with block-wise PCA whitening
     extract multiple feature maps for multiple images
@@ -33,11 +41,7 @@ def reduced_hypercolumn(images, n_components=32, verbose=False):
     interpolate each reduced feature map onto the target image size
     concatenate feature maps into whitened hypercolumn features
     """
-
-    block_pca = {
-        layer: PCA(n_components=n_components, whiten=True) 
-        for layer in layers
-    }
+    global block_pca
 
     # extract featuremaps for multiple images
     h_target, w_target = images[0].shape
@@ -57,12 +61,13 @@ def reduced_hypercolumn(images, n_components=32, verbose=False):
         b, nchan, h, w = features.shape
         ff = features.transpose(0,2,3,1) # to [batch, height, width, channels]
         ff = ff.reshape((-1, nchan)) # to [feature, channels]
-    
-        if ff.shape[0] > 1e6:
-            choice = np.random.choice(ff.shape[0], size=1e6, replace=False)
-            block_pca[block].fit(ff[choice])
-        else:
-            block_pca[block].fit(ff)
+
+        if train:
+            if ff.shape[0] > 1e6:
+                choice = np.random.choice(ff.shape[0], size=1e6, replace=False)
+                block_pca[block].fit(ff[choice])
+            else:
+                block_pca[block].fit(ff)
             
         xpca = block_pca[block].transform(ff)
 
