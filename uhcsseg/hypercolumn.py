@@ -48,16 +48,14 @@ def reduced_hypercolumn(images, n_components=32, verbose=False):
     xx = model.predict(np.vstack(x_in))
 
     hc = []
-    for feature_idx in range(len(layers)):
-        block = layers[feature_idx]
+    for block, features in zip(layers, xx):
         
         if verbose:
             print('reducing {} features'.format(block))
             
         # reshape feature map into [feature, channels]
-        b, nchan, h, w = xx[feature_idx].shape
-        X = xx[feature_idx]
-        ff = X.transpose(0,2,3,1) # to [batch, height, width, channels]
+        b, nchan, h, w = features.shape
+        ff = features.transpose(0,2,3,1) # to [batch, height, width, channels]
         ff = ff.reshape((-1, nchan)) # to [feature, channels]
     
         if ff.shape[0] > 1e6:
