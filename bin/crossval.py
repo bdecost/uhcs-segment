@@ -4,6 +4,7 @@ import os
 import h5py
 import click
 import numpy as np
+from sklearn.model_selection import LeaveOneOut
 
 import sys
 sys.path.append(os.getcwd())
@@ -14,41 +15,46 @@ from uhcsseg import hypercolumn, segment
 @click.command()
 @click.argument('hfile', type=click.Path())
 def crossval(hfile):
-    
+
+    cv = LeaveOneOut()
     images, labels, keys = io.load_dataset(hfile, cropbar=38)
 
-    ntrain = 4
-    t_images = images[-4:]
-    t_labels = labels[-4:]
-    t_keys = keys[-4:]
-    
-    hc = hypercolumn.ReducedHyperColumn()
-    clf = segment.TensorSGD()
-    
-    Xtrain = hc.fit(images[:ntrain], verbose=True)
-    clf.fit(Xtrain, labels[:ntrain])
+    for train_idx, val_idx in cv.split(images):
+        print('CV iteration {}'.format(val_idx[0]))
 
-    y_train = clf.predict(Xtrain)
+        hc = hypercolumn.ReducedHyperColumn()
+        clf = segment.TensorSGD()
+        
+        X_train = hc.fit(images[train_idx], verbose=True)
+        clf.fit(X_train, labels[train_idx])
+
+        train_pred = clf.predict(X_train)
     
-    Xtest = hc.predict(t_images, verbose=True)
-    y_pred = clf.predict(Xtest)
+        X_val = hc.predict(images[val_idx], verbose=True)
+        val_pred = clf.predict(X_val)
 
-    with h5py.File('data/segresults.h5', 'w') as f:
-        # save validation predictions
-        for pred, key in zip(y_pred, t_keys):
-            try:
-                g = f[key]
-            except KeyError:
-                g = f.create_group(key)
-            g['validation'] = pred
+        resultsfile = 'data/segresults.h5'
+        if os.path.isfile(resultsfile):
+            mode = 'r+'
+        else:
+            mode = 'w'
+        
+        with h5py.File(resultsfile, mode) as f:
+            # save validation predictions
+            for pred, key in zip(val_pred, keys[val_idx]):
+                try:
+                    g = f[key]
+                except KeyError:
+                    g = f.create_group(key)
+                g['validation'] = pred
 
-        # save training predictions
-        for pred, key in zip(y_train, keys[:ntrain]):
-            try:
-                g = f[key]
-            except KeyError:
-                g = f.create_group(key)
-            g['train0'] = pred
+            # save training predictions
+            for pred, key in zip(train_pred, keys[train_idx]):
+                try:
+                    g = f[key]
+                except KeyError:
+                    g = f.create_group(key)
+                g['train{}'.format(val_idx)] = pred
 
             
 if __name__ == '__main__':

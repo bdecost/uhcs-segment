@@ -20,4 +20,4 @@ def load_dataset(hfile, cropbar=None):
             images.append(im)
             labels.append(l)
             
-    return images, labels, names
+    return np.array(images), np.array(labels), np.array(names)
