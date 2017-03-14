@@ -1,4 +1,4 @@
-#+TITLE: Deep off-the-shelf pixelwise features for segmenting complex ultrahigh carbon steel microstructures
+#+TITLE: Deep off-the-shelf pixelwise features for semantic segmentation of ultrahigh carbon steel microstructures
 #+AUTHOR: Brian L. DeCost, Toby Francis, Elizabeth A. Holm
 
 #+OPTIONS:   H:4 num:t toc:nil \n:nil @:t ::t |:t ^:t -:t f:t *:t <:t
@@ -98,22 +98,47 @@ The PSD KS metric indicates failure rates for  the two-sample Kolmogorov-Smirnov
 | thresholded blur\cite{hecht2017} |  0 |  0 |          0 |      0 |
 | VGG conv-{1_2,2_2,3_3,4_3,5_3}   |  0 |  0 |          0 |      0 |
   
-** Abstract microconstituent segmentation
+** Semantic microconstituent segmentation
 # big question: how many micrographs do I need to annotate to get good perf?
 # Should we try to answer this question in the current study, or down the road a bit?
 
 \begin{figure}[!htbp]
-  \includegraphics[width=\textwidth]{microconstituentresults}
+  \includegraphics[width=\textwidth]{semanticresults}
   \caption{Independent test set predictions for the complex microconstituent segmentation task.}
   \label{fig:microconstituentresults}
 \end{figure}
 
 
-#+CAPTION: IoU performance for each class in the validation sets
+#+CAPTION: Semantic segmentation performance averaged over LOOCV validation images. Uncertainties are sample standard deviations calculated across validation folds.
 #+NAME: tab:segmentationperf
-| model                          | network | denuded zone | matrix | widmanstätten | global AC |
-|--------------------------------+---------+--------------+--------+---------------+-----------|
-| VGG conv-{1_2,2_2,3_3,4_3,5_3} |       0 | 0            | 0      | 0             | 0         |
+| metric             | VGG conv-{1_2,2_2,3_3,4_3,5_3} | train         |
+|--------------------+--------------------------------+---------------|
+| IU_{matrix}        | 47.4 \pm 14.6                  | 50.5 \pm 14.2 |
+| IU_{network}       | 65.8 \pm 20.4                  | 69.6 \pm 18.8 |
+| IU_{spheroidite}   | 87.9 \pm 6.9                   | 89.1 \pm 5.9  |
+| IU_{widmanstatten} | 38.3 \pm 14.2                  | 40.4 \pm 14.2 |
+| IU_{avg}           | 59.8 \pm 11.4                  | 62.4 \pm 10.7 |
+| ACC                | 86.4 \pm 6.9                   | 87.9 \pm 5.8  |
+
+
+
+# | metric             | VGG conv-{1_2,2_2,3_3,4_3,5_3} |  train            |
+# |--------------------+--------------------------------+-------------------|
+# | IU_{matrix}        | 0.4308 \pm 0.1429              | 0.6289 \pm 0.0219 |
+# | IU_{network}       | 0.6562 \pm 0.1973              | 0.8410 \pm 0.0217 |
+# | IU_{spheroidite}   | 0.8604 \pm 0.0791              | 0.8968 \pm 0.0413 |
+# | IU_{widmanstatten} | 0.3356 \pm 0.1375              | 0.3909 \pm 0.1182 |
+# | IU_{avg}           | 0.5707 \pm 0.1086              | 0.6894 \pm 0.0311 |
+# | ACC                | 0.8510 \pm 0.0733              | 0.9011 \pm 0.0313 |
+
+
+# | model                          | network | denuded zone | matrix | widmanstätten | global AC |
+# |--------------------------------+---------+--------------+--------+---------------+-----------|
+# | VGG conv-{1_2,2_2,3_3,4_3,5_3} |       0 | 0            | 0      | 0             | 0         |
+
+
+
+
 
 
 ** Combined segmentation models
