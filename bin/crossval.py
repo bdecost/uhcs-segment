@@ -13,12 +13,14 @@ from uhcsseg import io
 from uhcsseg import hypercolumn, tensorsgd
 
 @click.command()
-@click.argument('hfile', type=click.Path())
-@click.option('-r', '--resultsfile', default='data/segresults.h5', type=click.Path())
-def crossval(hfile, resultsfile):
+@click.argument('hfile', type=click.Path(), help='hdf5 file with input images and annotations.')
+@click.option('-r', '--resultsfile', default='data/segresults.h5', type=click.Path(),
+              help='hdf5 file to store results.')
+@click.option('-c', '--crop', default=38, type=int, help='pixels to remove from image bottom')
+def crossval(hfile, resultsfile, crop):
 
     cv = LeaveOneOut()
-    images, labels, keys = io.load_dataset(hfile, cropbar=38)
+    images, labels, keys = io.load_dataset(hfile, cropbar=crop)
 
     for train_idx, val_idx in cv.split(images):
         print('CV iteration {}'.format(val_idx[0]))
