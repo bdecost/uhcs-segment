@@ -1,0 +1,7 @@
+**.backups
+**__pycache__
+**.ipynb_checkpoints/
+data/
+images/
+figures/
+notebooks/
