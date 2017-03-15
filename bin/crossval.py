@@ -10,7 +10,7 @@ import sys
 sys.path.append(os.getcwd())
 
 from uhcsseg import io
-from uhcsseg import hypercolumn, segment
+from uhcsseg import hypercolumn, tensorsgd
 
 @click.command()
 @click.argument('hfile', type=click.Path())
@@ -24,7 +24,7 @@ def crossval(hfile, resultsfile):
         print('CV iteration {}'.format(val_idx[0]))
 
         hc = hypercolumn.ReducedHyperColumn()
-        clf = segment.TensorSGD()
+        clf = tensorsgd.TensorSGD()
         
         X_train = hc.fit(images[train_idx], verbose=True)
         clf.fit(X_train, labels[train_idx])
