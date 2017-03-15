@@ -1,3 +1,4 @@
+""" tensorsgd: wrapper around sklearn SGD classifier for keras tensor input """
 import numpy as np
 from sklearn.linear_model import SGDClassifier
 
