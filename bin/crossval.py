@@ -14,7 +14,8 @@ from uhcsseg import hypercolumn, segment
 
 @click.command()
 @click.argument('hfile', type=click.Path())
-def crossval(hfile):
+@click.option('-r', '--resultsfile', default='data/segresults.h5', type=click.Path())
+def crossval(hfile, resultsfile):
 
     cv = LeaveOneOut()
     images, labels, keys = io.load_dataset(hfile, cropbar=38)
@@ -33,7 +34,6 @@ def crossval(hfile):
         X_val = hc.predict(images[val_idx], verbose=True)
         val_pred = clf.predict(X_val)
 
-        resultsfile = 'data/segresults.h5'
         if os.path.isfile(resultsfile):
             mode = 'r+'
         else:

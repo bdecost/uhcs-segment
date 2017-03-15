@@ -67,7 +67,7 @@ class ReducedHyperColumn():
 
             if train:
                 if ff.shape[0] > 1e6:
-                    choice = np.random.choice(ff.shape[0], size=1e6, replace=False)
+                    choice = np.random.choice(ff.shape[0], size=int(1e6), replace=False)
                     self.block_pca[block].fit(ff[choice])
                 else:
                     self.block_pca[block].fit(ff)
