@@ -13,12 +13,15 @@ from uhcsseg import io
 from uhcsseg import hypercolumn, tensorsgd
 
 @click.command()
-@click.argument('hfile', type=click.Path(), help='hdf5 file with input images and annotations.')
+@click.argument('hfile', type=click.Path())
 @click.option('-r', '--resultsfile', default='data/segresults.h5', type=click.Path(),
               help='hdf5 file to store results.')
 @click.option('-c', '--crop', default=38, type=int, help='pixels to remove from image bottom')
 def crossval(hfile, resultsfile, crop):
-
+    """ crossval.py HFILE
+    Run LOOCV with reduced hypercolumn features
+    read data from hdf5 HFILE with input images and annotations.
+    """
     cv = LeaveOneOut()
     images, labels, keys = io.load_dataset(hfile, cropbar=crop)
 
