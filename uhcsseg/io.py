@@ -11,7 +11,7 @@ def load_dataset(hfile, cropbar=None):
             im = micrograph['image'][...]
             l = micrograph['labels'][...]
 
-            if cropbar is not None:
+            if cropbar is not None and cropbar > 0:
                 # remove micron bar from bottom of image
                 im = im[:-cropbar]
                 l = l[:-cropbar]
