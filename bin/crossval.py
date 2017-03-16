@@ -19,8 +19,9 @@ from uhcsseg import hypercolumn, tensorsgd
 @click.option('-c', '--crop', default=38, type=int, help='pixels to remove from image bottom')
 def crossval(hfile, resultsfile, crop):
     """ crossval.py HFILE
-    Run LOOCV with reduced hypercolumn features
-    read data from hdf5 HFILE with input images and annotations.
+
+    Run LOOCV with reduced hypercolumn features and SGD with linear SVM loss.
+    Read data from hdf5 HFILE with input images and annotations.
     """
     cv = LeaveOneOut()
     images, labels, keys = io.load_dataset(hfile, cropbar=crop)
