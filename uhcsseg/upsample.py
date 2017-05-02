@@ -25,6 +25,7 @@ def get_values(inputs, **arguments):
 
 def sparse_upsample_output_shape(input_shape):
     data_shape, index_shape = input_shape
+    assert K.backend() == 'tensorflow'
     assert len(data_shape) == 4 # only valid for 4D tensors
     assert len(index_shape) == 3
     return (data_shape[0], index_shape[0], data_shape[3])
