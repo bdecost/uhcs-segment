@@ -7,16 +7,16 @@ import numpy as np
 import tensorflow as tf
 from keras import backend as K
 
-def build_index(batch, x, y):
+def get_values(data, batch, x, y):
+    """ construct index tensor for tf.gather_nd """
     coords = tf.stack((batch, x, y), 2)
     indices = tf.cast(tf.round(coords), tf.int32)
-    
+    return tf.gather_nd(data, indices)    
 
-def get_values(inputs, **arguments):
-    """ index into input tensor x with indices in input tensor sel
+def sparse_upsample_bilinear(inputs, **arguments):
+    """ upsample the input tensor `data` with indices in input tensor sel
+    performs sparse bilinear interpolation
     indices should explicitly contain the sample index: (b, i, j)
-    arguments: h, w -- dimensions of feature map to upsample
-        needed since dimensions are not known at model compile time
     """
     data, coords = inputs
     h = tf.cast(tf.shape(data)[1], tf.float32)
@@ -29,11 +29,24 @@ def get_values(inputs, **arguments):
     
     x1, x2 = tf.floor(x), tf.ceil(x)
     y1, y2 = tf.floor(y), tf.ceil(y)
-    
-    coords = tf.stack((batch, x, y), 2)
-    indices = tf.cast(tf.round(coords), tf.int32)
 
-    return tf.gather_nd(data, indices)
+    return get_values(data, batch, x, y)
+
+def sparse_upsample_nearest(inputs, **arguments):
+    """ 'upsample' input tensor `data` with indices in input tensor sel
+    yields the value of the nearest pixel in the `data` tensor
+    indices should explicitly contain the sample index: (b, i, j)
+    """
+    data, coords = inputs
+    h = tf.cast(tf.shape(data)[1], tf.float32)
+    w = tf.cast(tf.shape(data)[2], tf.float32)
+    
+    # transform fractional coordinates to feature map coordinates
+    batch = coords[:,:,0]
+    x = coords[:,:,1] * h
+    y = coords[:,:,2] * w
+
+    return get_values(data, batch, x, y)
 
 def sparse_upsample_output_shape(input_shape):
     data_shape, index_shape = input_shape
@@ -42,3 +55,6 @@ def sparse_upsample_output_shape(input_shape):
     assert len(index_shape) == 3
     return (data_shape[0], index_shape[0], data_shape[3])
 
+
+# aliases
+sparse_upsample = sparse_upsample_bilinear
