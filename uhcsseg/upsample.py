@@ -26,12 +26,19 @@ def sparse_upsample_bilinear(inputs, **arguments):
     batch = coords[:,:,0]
     x = h * coords[:,:,1]
     y = w * coords[:,:,2]
-    
+
     x1, x2 = tf.floor(x), tf.ceil(x)
     y1, y2 = tf.floor(y), tf.ceil(y)
 
-    x, y = tf.round(x), tf.round(y)
-    return get_values(data, batch, x, y)
+    # horizontal interpolation first
+    top = (x2 - x) * get_values(data, batch, x1, y2)  + (x - x1) * get_values(data, batch, x2, y2)
+    bottom = (x2 - x) * get_values(data, batch, x1, y1)  + (x - x1) * get_values(data, batch, x2, y1)
+
+    # vertical interpolation
+    interp = (y2 - y) * top +  (y - y1) * bottom
+    return interp
+    # x, y = tf.round(x), tf.round(y)
+    # return get_values(data, batch, x, y)
 
 def sparse_upsample_nearest(inputs, **arguments):
     """ 'upsample' input tensor `data` with indices in input tensor sel
