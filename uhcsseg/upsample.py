@@ -10,7 +10,7 @@ from keras import backend as K
 def get_values(data, batch, x, y):
     """ construct index tensor for tf.gather_nd """
     coords = tf.stack((batch, x, y), 2)
-    indices = tf.cast(tf.round(coords), tf.int32)
+    indices = tf.cast(coords, tf.int32)
     return tf.gather_nd(data, indices)    
 
 def sparse_upsample_bilinear(inputs, **arguments):
@@ -24,12 +24,13 @@ def sparse_upsample_bilinear(inputs, **arguments):
     
     # transform fractional coordinates to feature map coordinates
     batch = coords[:,:,0]
-    x = coords[:,:,1] * h
-    y = coords[:,:,2] * w
+    x = h * coords[:,:,1]
+    y = w * coords[:,:,2]
     
     x1, x2 = tf.floor(x), tf.ceil(x)
     y1, y2 = tf.floor(y), tf.ceil(y)
 
+    x, y = tf.round(x), tf.round(y)
     return get_values(data, batch, x, y)
 
 def sparse_upsample_nearest(inputs, **arguments):
@@ -43,9 +44,9 @@ def sparse_upsample_nearest(inputs, **arguments):
     
     # transform fractional coordinates to feature map coordinates
     batch = coords[:,:,0]
-    x = coords[:,:,1] * h
-    y = coords[:,:,2] * w
-
+    x = h * coords[:,:,1]
+    y = w * coords[:,:,2]
+    x, y = tf.round(x), tf.round(y)
     return get_values(data, batch, x, y)
 
 def sparse_upsample_output_shape(input_shape):
