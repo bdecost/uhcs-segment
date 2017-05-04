@@ -22,4 +22,5 @@ if __name__ == '__main__':
     model = pixelnet_model()
     f = model.predict([im[np.newaxis,:,:,np.newaxis], coords])
     print('sparse upsample:')
+    print(f.shape)
     print(f)

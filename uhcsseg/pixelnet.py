@@ -1,4 +1,5 @@
 """ keras implementation of PixelNet architecture. """
+import numpy as np
 import tensorflow as tf
 from keras.models import Model
 from keras.layers import Input, Conv2D, MaxPooling2D, Lambda, Layer, Concatenate, Dropout, Dense
@@ -60,32 +61,27 @@ def pixelnet_model(nclasses=4):
     x = Conv2D(64, (3, 3), activation='relu', padding='same', name='block4_conv3')(x)
     x = MaxPooling2D((2, 2), strides=(2, 2), name='block4_pool')(x)
     x4 = Dropout(0.25)(x)
-    
-    sel1 = Lambda(sparse_upsample,
-                  output_shape=sparse_upsample_output_shape)([x1, inputcoord])
-    sel2 = Lambda(sparse_upsample,
-                  output_shape=sparse_upsample_output_shape)([x2, inputcoord])
-    sel3 = Lambda(sparse_upsample,
-                  output_shape=sparse_upsample_output_shape)([x3, inputcoord])
-    sel4 = Lambda(sparse_upsample,
-                  output_shape=sparse_upsample_output_shape)([x4, inputcoord])
+
+    upsample = Lambda(
+        sparse_upsample,
+        output_shape=sparse_upsample_output_shape
+    )
+    sel1 = upsample([x1, inputcoord])
+    sel2 = upsample([x2, inputcoord])
+    sel3 = upsample([x3, inputcoord])
+    sel4 = upsample([x4, inputcoord])
 
     # now we have shape (batch, sample, channel)
     x = Concatenate()([sel1, sel2, sel3, sel4])
 
-    def batchify_pixels(x):
-        # _, npix, nchannels = tf.shape(x)
-        npix, nchannels = tf.shape(x)[1], tf.shape(x)[2]
-        return K.reshape(x, (npix, nchannels))
-
-    def batchify_pixels_shape(input_shape):
-        # _, npix, nchannels = tf.shape(x)
-        _, npix, nchannels = input_shape
-        return (npix, nchannels)
-
-    
     # flatten into pixel features
-    x = Lambda(batchify_pixels, output_shape=batchify_pixels_shape)(x)
+    batchsize, npix, nchannels = tf.shape(x)[0], tf.shape(x)[1], tf.shape(x)[2]
+
+    flatten = Lambda(
+        lambda t: K.reshape(t, (-1, nchannels)),
+        output_shape=lambda s: (-1, s[2])
+    )
+    x = flatten(x)
 
     x = Dense(1024, activation='relu')(x)
     x = Dropout(0.5)(x)
@@ -94,19 +90,12 @@ def pixelnet_model(nclasses=4):
     x = Dropout(0.5)(x)
 
     x = Dense(nclasses, activation='softmax', name='predictions')(x)
-    
-    def unbatchify_pixels(x):
-        # npix, nchannels = tf.shape(x)
-        print(tf.shape(x))
-        npix, nchannels = tf.shape(x)[0], tf.shape(x)[1]
-        return K.reshape(x, (1, npix, nchannels))
 
-    def unbatchify_pixels_shape(input_shape):
-        # npix, nchannels = tf.shape(x)
-        npix, nchannels = input_shape
-        return (1, npix, nchannels)
-    
-    x = Lambda(unbatchify_pixels, output_shape=unbatchify_pixels_shape)(x)
+    unflatten = Lambda(
+        lambda t: K.reshape(t, (batchsize, npix, nclasses)),
+        output_shape=lambda s: (batchsize, npix, nclasses)
+    )
+    x = unflatten(x)
     
     model = Model(inputs=[inputdata, inputcoord], outputs=x)
     return model
