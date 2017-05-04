@@ -15,10 +15,20 @@ def pixelnet_model(nclasses=4):
 
     @article{pixelnet,
       title={PixelNet: {R}epresentation of the pixels, by the pixels, and for the pixels},
-      author={Bansal, Aayush and Chen, Xinlei, and  Russell, Bryan and Gupta, Abhinav and Ramanan, Deva},
+      author={Bansal, Aayush
+              and Chen, Xinlei,
+              and  Russell, Bryan
+              and Gupta, Abhinav
+              and Ramanan, Deva},
       Journal={arXiv preprint arXiv:1702.06506},
       year={2017}
     }
+
+    TODO: add batch normalization to conv layers (for training from scratch)
+    TODO: consider removing dropout from conv layers
+
+    From the paper and their notes on github, it seems like the semantic segmentation
+    task should work either with linear classifier + BatchNorm, or with MLP without BatchNorm.
     """
     
     # a single input channel for grayscale micrographs...
