@@ -25,6 +25,7 @@ def sparse_upsample_bilinear(inputs, **arguments):
     performs sparse bilinear interpolation
     indices should explicitly contain the sample index: (b, i, j)
     """
+    # NOTE: spatial dimensions may be reversed here relative to tf conventions.
     data, coords = inputs
     w = tf.cast(tf.shape(data)[1], tf.float32)
     h = tf.cast(tf.shape(data)[2], tf.float32)
