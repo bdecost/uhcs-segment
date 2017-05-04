@@ -8,11 +8,19 @@ import os
 import sys
 sys.path.append(os.getcwd())
 
-
 from uhcsseg.upsample import sparse_upsample, sparse_upsample_output_shape
 
 def pixelnet_model(nclasses=4):
+    """ Use sparse upsample implementations to define a PixelNet model
 
+    @article{pixelnet,
+      title={PixelNet: {R}epresentation of the pixels, by the pixels, and for the pixels},
+      author={Bansal, Aayush and Chen, Xinlei, and  Russell, Bryan and Gupta, Abhinav and Ramanan, Deva},
+      Journal={arXiv preprint arXiv:1702.06506},
+      year={2017}
+    }
+    """
+    
     # a single input channel for grayscale micrographs...
     inputdata = Input(shape=(None,None,1))
 
