@@ -64,7 +64,8 @@ def pixelnet_model(nclasses=4):
 
     upsample = Lambda(
         sparse_upsample,
-        output_shape=sparse_upsample_output_shape
+        output_shape=sparse_upsample_output_shape,
+        name='sparse_upsample'
     )
     sel1 = upsample([x1, inputcoord])
     sel2 = upsample([x2, inputcoord])
@@ -79,7 +80,8 @@ def pixelnet_model(nclasses=4):
 
     flatten = Lambda(
         lambda t: K.reshape(t, (-1, nchannels)),
-        output_shape=lambda s: (-1, s[2])
+        output_shape=lambda s: (-1, s[2]),
+        name='flatten_pixel_features'
     )
     x = flatten(x)
 
@@ -93,7 +95,8 @@ def pixelnet_model(nclasses=4):
 
     unflatten = Lambda(
         lambda t: K.reshape(t, (batchsize, npix, nclasses)),
-        output_shape=lambda s: (batchsize, npix, nclasses)
+        output_shape=lambda s: (batchsize, npix, nclasses),
+        name='unflatten_pixel_features'
     )
     x = unflatten(x)
     
