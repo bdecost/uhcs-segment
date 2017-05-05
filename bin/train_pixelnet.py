@@ -97,7 +97,7 @@ def stratified_training_samples():
 if __name__ == '__main__':
     datafile = 'data/uhcs.h5'
     images, labels, names = load_dataset(datafile, cropbar=38)
-
+    print(images.shape)
     # normalize dataset
     images = (images - np.mean(images)) / np.std(images)
     images = images[:,:,:,np.newaxis]

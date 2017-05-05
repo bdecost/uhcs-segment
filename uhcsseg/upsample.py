@@ -68,6 +68,8 @@ def sparse_upsample_nearest(inputs, **arguments):
     return get_values(data, batch, x, y)
 
 def sparse_upsample_output_shape(input_shape):
+    # sparse_upsample expects two input tensors:
+    # the feature map tensor and an index tensor
     data_shape, index_shape = input_shape
     assert K.backend() == 'tensorflow'
     assert len(data_shape) == 4 # only valid for 4D tensors
