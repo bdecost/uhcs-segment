@@ -43,7 +43,7 @@ def pixelnet_model(nclasses=4):
     inputcoord = Input(shape=(None, 3,), dtype='float32')
 
     x = conv2d_bn(inputdata, 16, 3, 3, name='block1_conv1')
-    x = conv2d_bn(x, 16, 3, 3, name='block1_conv1')
+    x = conv2d_bn(x, 16, 3, 3, name='block1_conv2')
     x = MaxPooling2D((2, 2), strides=(2, 2), name='block1_pool')(x)
     x1 = Dropout(0.25)(x)
 
