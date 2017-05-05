@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 import os
 import numpy as np
-import skimage.data
-import skimage.color
 
 import tensorflow as tf
 from keras import optimizers
