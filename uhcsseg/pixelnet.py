@@ -5,6 +5,8 @@ from keras.models import Model
 from keras.layers import Input, Conv2D, MaxPooling2D, Lambda, Layer, Concatenate, Dropout, Dense
 from keras import backend as K
 
+from keras.applications.inception_v3 import conv2d_bn
+
 import os
 import sys
 sys.path.append(os.getcwd())
@@ -40,31 +42,31 @@ def pixelnet_model(nclasses=4):
     # i.e. batch index, row index, column index
     inputcoord = Input(shape=(None, 3,), dtype='float32')
 
-    x = Conv2D(16, (3, 3),  activation='relu', padding='same', name='block1_conv1')(inputdata)
-    x = Conv2D(16, (3, 3),  activation='relu', padding='same', name='block1_conv2')(x)
+    x = conv2d_bn(inputdata, 16, 3, 3, name='block1_conv1')
+    x = conv2d_bn(x, 16, 3, 3, name='block1_conv1')
     x = MaxPooling2D((2, 2), strides=(2, 2), name='block1_pool')(x)
     x1 = Dropout(0.25)(x)
 
-    x = Conv2D(32, (3, 3), activation='relu', padding='same', name='block2_conv1')(x1)
-    x = Conv2D(32, (3, 3), activation='relu', padding='same', name='block2_conv2')(x)
+    x = conv2d_bn(x1, 32, 3, 3, name='block2_conv1')
+    x = conv2d_bn(x, 32, 3, 3, name='block2_conv2')
     x = MaxPooling2D((2, 2), strides=(2, 2), name='block2_pool')(x)
     x2 = Dropout(0.25)(x)
-    
-    x = Conv2D(64, (3, 3), activation='relu', padding='same', name='block3_conv1')(x2)
-    x = Conv2D(64, (3, 3), activation='relu', padding='same', name='block3_conv2')(x)
-    x = Conv2D(64, (3, 3), activation='relu', padding='same', name='block3_conv3')(x)
+
+    x = conv2d_bn(x2, 64, 3, 3, name='block3_conv1')
+    x = conv2d_bn(x, 64, 3, 3, name='block3_conv2')
+    x = conv2d_bn(x, 64, 3, 3, name='block3_conv3')
     x = MaxPooling2D((2, 2), strides=(2, 2), name='block3_pool')(x)
     x3 = Dropout(0.25)(x)
 
-    x = Conv2D(128, (3, 3), activation='relu', padding='same', name='block4_conv1')(x3)
-    x = Conv2D(128, (3, 3), activation='relu', padding='same', name='block4_conv2')(x)
-    x = Conv2D(128, (3, 3), activation='relu', padding='same', name='block4_conv3')(x)
+    x = conv2d_bn(x3, 128, 3, 3, name='block4_conv1')
+    x = conv2d_bn(x, 128, 3, 3, name='block4_conv2')
+    x = conv2d_bn(x, 128, 3, 3, name='block4_conv3')
     x = MaxPooling2D((2, 2), strides=(2, 2), name='block4_pool')(x)
     x4 = Dropout(0.25)(x)
 
-    x = Conv2D(128, (3, 3), activation='relu', padding='same', name='block5_conv1')(x4)
-    x = Conv2D(128, (3, 3), activation='relu', padding='same', name='block5_conv2')(x)
-    x = Conv2D(128, (3, 3), activation='relu', padding='same', name='block5_conv3')(x)
+    x = conv2d_bn(x4, 128, 3, 3, name='block5_conv1')
+    x = conv2d_bn(x, 128, 3, 3, name='block5_conv2')
+    x = conv2d_bn(x, 128, 3, 3, name='block5_conv3')
     x = MaxPooling2D((2, 2), strides=(2, 2), name='block5_pool')(x)
     x5 = Dropout(0.25)(x)
 
