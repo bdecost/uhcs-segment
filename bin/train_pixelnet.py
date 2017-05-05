@@ -53,7 +53,7 @@ def random_training_samples():
         # convert labels to categorical indicators for cross-entropy loss
         s = pixel_labels.shape
         pixel_labels = to_categorical(pixel_labels.flat, num_classes=NCLASSES)
-        pixel_labels = pixel_labels.reshape((*s, NCLASSES))
+        pixel_labels = pixel_labels.reshape((s[0], s[1], NCLASSES))
 
         yield ([t_ims, coords], pixel_labels)
 
@@ -86,7 +86,7 @@ def random_validation_samples():
         # convert labels to categorical indicators for cross-entropy loss
         s = pixel_labels.shape
         pixel_labels = to_categorical(pixel_labels.flat, num_classes=NCLASSES)
-        pixel_labels = pixel_labels.reshape((*s, NCLASSES))
+        pixel_labels = pixel_labels.reshape((s[0], s[1], NCLASSES))
 
         yield ([t_ims, coords], pixel_labels)
         
