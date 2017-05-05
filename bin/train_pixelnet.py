@@ -100,9 +100,6 @@ if __name__ == '__main__':
     # normalize dataset
     images = (images - np.mean(images)) / np.std(images)
     images = images[:,:,:,np.newaxis]
-
-    for t in random_training_samples():
-        break
     
     N, h, w, _ = images.shape
     # steps_per_epoch = NTRAIN * h * w / (BATCHSIZE*NPIX)
