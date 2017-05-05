@@ -3,6 +3,7 @@ import os
 import numpy as np
 
 import tensorflow as tf
+
 from keras import optimizers
 from keras.models import Model
 from keras import backend as K
@@ -22,6 +23,9 @@ BATCHSIZE = 4
 NTRAIN = 20
 NPIX = 2048
 NCLASSES = 4
+
+pixel_labels = tf.placeholder(tf.float32, shape=(BATCHSIZE, NPIX))
+
 
 def random_training_samples():
     """ generate random samples of pixels in batches of four training images """
@@ -44,9 +48,8 @@ def random_training_samples():
         ind = ind.astype(np.int32)
 
         # get sample pixel labels
-        with tf.Session() as s:
-            pixel_labels = tf.gather_nd(target_labels, ind).eval()
-        # pixel_labels = np.take(target_labels, ind)
+        bb, xx, yy = ind[:,:,0], ind[:,:,1], ind[:,:,2]
+        pixel_labels = target_labels[bb,xx,yy]
         
         # convert labels to categorical indicators for cross-entropy loss
         s = pixel_labels.shape
@@ -76,10 +79,8 @@ def random_validation_samples():
         ind = ind.astype(np.int32)
 
         # get sample pixel labels
-        with tf.Session() as s:
-            pixel_labels = tf.gather_nd(target_labels, ind).eval()
-
-        # pixel_labels = np.take(target_labels, ind)
+        bb, xx, yy = ind[:,:,0], ind[:,:,1], ind[:,:,2]
+        pixel_labels = target_labels[bb,xx,yy]
 
         # convert labels to categorical indicators for cross-entropy loss
         s = pixel_labels.shape
@@ -102,8 +103,9 @@ if __name__ == '__main__':
     images = images[:,:,:,np.newaxis]
     
     N, h, w, _ = images.shape
-    # steps_per_epoch = NTRAIN * h * w / (BATCHSIZE*NPIX)
-    steps_per_epoch = 2
+    steps_per_epoch = NTRAIN * h * w / (BATCHSIZE*NPIX)
+    # steps_per_epoch = 100
+    print('steps_per_epoch:')
     print(steps_per_epoch)
     
     opt = optimizers.Adam()
@@ -113,22 +115,13 @@ if __name__ == '__main__':
     csv_logger = CSVLogger('run/training-1.log')
     checkpoint = ModelCheckpoint('run/weights.{epoch:02d}-{val_loss:.2f}.hdf5', save_best_only=True, save_weights_only=True)
     early_stopping = EarlyStopping(monitor='val_loss', patience=3)
-    
+
+    # note: keras/engine/training.py:L132 --> is not None
     f = model.fit_generator(
         random_training_samples(),
         steps_per_epoch,
         epochs=10,
         callbacks=[csv_logger, checkpoint, early_stopping],
         validation_data=random_validation_samples(),
-        validation_steps=2
+        validation_steps=10
     )
-    # t = random_training_samples()
-    # v = random_validation_samples()
-    # f = model.fit(t
-    #     random_training_samples(),
-    #     steps_per_epoch,
-    #     epochs=10,
-    #     callbacks=[csv_logger, checkpoint, early_stopping],
-    #     validation_data=random_validation_samples(),
-    #     validation_steps=10
-    # )
