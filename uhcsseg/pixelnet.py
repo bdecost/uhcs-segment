@@ -95,7 +95,7 @@ def pixelnet_model(nclasses=4):
 
     unflatten = Lambda(
         lambda t: K.reshape(t, (batchsize, npix, nclasses)),
-        output_shape=lambda s: (batchsize, npix, nclasses),
+        output_shape=lambda s: (4, 2048, nclasses),
         name='unflatten_pixel_features'
     )
     x = unflatten(x)
