@@ -56,11 +56,17 @@ def pixelnet_model(nclasses=4):
     x = MaxPooling2D((2, 2), strides=(2, 2), name='block3_pool')(x)
     x3 = Dropout(0.25)(x)
 
-    x = Conv2D(64, (3, 3), activation='relu', padding='same', name='block4_conv1')(x3)
-    x = Conv2D(64, (3, 3), activation='relu', padding='same', name='block4_conv2')(x)
-    x = Conv2D(64, (3, 3), activation='relu', padding='same', name='block4_conv3')(x)
+    x = Conv2D(128, (3, 3), activation='relu', padding='same', name='block4_conv1')(x3)
+    x = Conv2D(128, (3, 3), activation='relu', padding='same', name='block4_conv2')(x)
+    x = Conv2D(128, (3, 3), activation='relu', padding='same', name='block4_conv3')(x)
     x = MaxPooling2D((2, 2), strides=(2, 2), name='block4_pool')(x)
     x4 = Dropout(0.25)(x)
+
+    x = Conv2D(128, (3, 3), activation='relu', padding='same', name='block5_conv1')(x4)
+    x = Conv2D(128, (3, 3), activation='relu', padding='same', name='block5_conv2')(x)
+    x = Conv2D(128, (3, 3), activation='relu', padding='same', name='block5_conv3')(x)
+    x = MaxPooling2D((2, 2), strides=(2, 2), name='block5_pool')(x)
+    x5 = Dropout(0.25)(x)
 
     upsample = Lambda(
         sparse_upsample,
@@ -71,9 +77,10 @@ def pixelnet_model(nclasses=4):
     sel2 = upsample([x2, inputcoord])
     sel3 = upsample([x3, inputcoord])
     sel4 = upsample([x4, inputcoord])
+    sel5 = upsample([x5, inputcoord])
 
     # now we have shape (batch, sample, channel)
-    x = Concatenate()([sel1, sel2, sel3, sel4])
+    x = Concatenate()([sel1, sel2, sel3, sel4, sel5])
 
     # flatten into pixel features
     batchsize, npix, nchannels = tf.shape(x)[0], tf.shape(x)[1], tf.shape(x)[2]
