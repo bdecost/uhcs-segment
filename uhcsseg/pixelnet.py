@@ -44,31 +44,26 @@ def pixelnet_model(nclasses=4):
 
     x = conv2d_bn(inputdata, 16, 3, 3, name='block1_conv1')
     x = conv2d_bn(x, 16, 3, 3, name='block1_conv2')
-    x = MaxPooling2D((2, 2), strides=(2, 2), name='block1_pool')(x)
-    x1 = Dropout(0.25)(x)
+    x1 = MaxPooling2D((2, 2), strides=(2, 2), name='block1_pool')(x)
 
     x = conv2d_bn(x1, 32, 3, 3, name='block2_conv1')
     x = conv2d_bn(x, 32, 3, 3, name='block2_conv2')
-    x = MaxPooling2D((2, 2), strides=(2, 2), name='block2_pool')(x)
-    x2 = Dropout(0.25)(x)
+    x2 = MaxPooling2D((2, 2), strides=(2, 2), name='block2_pool')(x)
 
     x = conv2d_bn(x2, 64, 3, 3, name='block3_conv1')
     x = conv2d_bn(x, 64, 3, 3, name='block3_conv2')
     x = conv2d_bn(x, 64, 3, 3, name='block3_conv3')
-    x = MaxPooling2D((2, 2), strides=(2, 2), name='block3_pool')(x)
-    x3 = Dropout(0.25)(x)
+    x3 = MaxPooling2D((2, 2), strides=(2, 2), name='block3_pool')(x)
 
     x = conv2d_bn(x3, 128, 3, 3, name='block4_conv1')
     x = conv2d_bn(x, 128, 3, 3, name='block4_conv2')
     x = conv2d_bn(x, 128, 3, 3, name='block4_conv3')
-    x = MaxPooling2D((2, 2), strides=(2, 2), name='block4_pool')(x)
-    x4 = Dropout(0.25)(x)
+    x4 = MaxPooling2D((2, 2), strides=(2, 2), name='block4_pool')(x)
 
     x = conv2d_bn(x4, 128, 3, 3, name='block5_conv1')
     x = conv2d_bn(x, 128, 3, 3, name='block5_conv2')
     x = conv2d_bn(x, 128, 3, 3, name='block5_conv3')
-    x = MaxPooling2D((2, 2), strides=(2, 2), name='block5_pool')(x)
-    x5 = Dropout(0.25)(x)
+    x5 = MaxPooling2D((2, 2), strides=(2, 2), name='block5_pool')(x)
 
     upsample = Lambda(
         sparse_upsample,
