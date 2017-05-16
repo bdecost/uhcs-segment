@@ -66,9 +66,11 @@ The PSD KS metric indicates failure rates for  the two-sample Kolmogorov-Smirnov
 
 #+CAPTION: Segmentation performance on validation sets
 #+NAME: tab:segmentationperf
-| model                            |        matrix |   spheroidite |      IU_{avg} |           ACC | PSD \chi^2 | PSD KS |
-| threshold                        |             0 |             0 |             0 |             0 |            |        |
-| thresholded blur\cite{hecht2017} |             0 |             0 |             0 |             0 |            |        |
+| model                            | matrix        | spheroidite   | IU_{avg}      | ACC           | PSD \chi^2 | PSD KS |
+|----------------------------------+---------------+---------------+---------------+---------------+------------+--------|
+| otsu                             | 86.2 \pm 7.2  | 53.7 \pm 12.1 | 69.9 \pm 9.3  | 88.1 \pm 6.1  |            |        |
+| thresholded blur\cite{hecht2017} | 0             | 0             | 0             | 0             |            |        |
+|----------------------------------+---------------+---------------+---------------+---------------+------------+--------|
 | conv-{1_2,2_2,3_3,4_3,5_3}       | 78.0 \pm 28.6 | 52.1 \pm 20.0 | 65.0 \pm 23.0 | 81.1 \pm 24.2 |            |        |
 
   
