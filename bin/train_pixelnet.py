@@ -28,10 +28,15 @@ if __name__ == '__main__':
     
     N, h, w, _ = images.shape
 
+    run_id = 1
     batchsize = 4
     ntrain = 20
     npix = 2048
     nclasses = 4
+
+    dataset_name, ext = os.path.splitext(os.basename(datafile))
+    model_dir = os.path.join('models', 'crossval', dataset_name, 'run{:02d}'.format(run_id))
+    os.path.makedirs(model_dir, exist_ok=True)
     
     steps_per_epoch = ntrain * h * w / (batchsize*npix)
     # steps_per_epoch = 100
@@ -42,8 +47,15 @@ if __name__ == '__main__':
     model = pixelnet_model()
     model.compile(loss='categorical_crossentropy', optimizer=opt)
 
-    csv_logger = CSVLogger('run/training-1.log')
-    checkpoint = ModelCheckpoint('run/weights.{epoch:02d}-{val_loss:.2f}.hdf5', save_best_only=True, save_weights_only=True)
+    csv_logger = CSVLogger(os.path.join(model_dir, 'training-1.log'))
+    checkpoint = ModelCheckpoint(
+        os.path.join(
+            model_dir,
+            'weights.{epoch:02d}-{val_loss:.2f}.hdf5'
+        ),
+        save_best_only=True,
+        save_weights_only=True
+    )
     early_stopping = EarlyStopping(monitor='val_loss', patience=3)
 
     # note: keras/engine/training.py:L132 --> is not None
