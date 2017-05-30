@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import os
+import glob
 import click
 import numpy as np
 from keras import optimizers
@@ -9,7 +10,7 @@ import sys
 sys.path.append(os.getcwd())
 sys.path.append('../pixelnet')
 
-from uhcsseg import data
+from uhcsseg import data, perf
 from pixelnet.pixelnet import pixelnet_model
 from pixelnet.utils import random_pixel_samples
 
@@ -56,7 +57,7 @@ def train_pixelnet(dataset, batchsize, npix, max_epochs, validation_steps):
     print('steps_per_epoch: {}'.format(steps_per_epoch))
     
     opt = optimizers.Adam()
-    model = pixelnet_model()
+    model = pixelnet_model(nclasses=nclasses)
     model.compile(loss='categorical_crossentropy', optimizer=opt)
 
     csv_logger = CSVLogger(os.path.join(model_dir, 'training-1.log'))
@@ -79,6 +80,30 @@ def train_pixelnet(dataset, batchsize, npix, max_epochs, validation_steps):
         validation_data=random_pixel_samples(X_val, y_val),
         validation_steps=validation_steps
     )
+
+    # load best model and evaluate
+    # sort by epoch -- use with ModelCheckpoint(..., save_best_only=True)
+    # file path format should be 'weights.{epoch}...'
+    weights_files = glob.glob(os.path.join(model_dir, 'weights*.hdf5'))
+    best_weights = sorted(weights_files)[-1]
+
+    # re-instantiate model because of keras requirement that tensors
+    # have the same shape at train and test time
+    model = pixelnet_model(nclasses=nclasses, inference=True)
+    model.load_weights(best_weights)
+
+    # run with batch_size=1 for inference due to dense feature upsampling
+    p_validate = model.predict(Xval, batch_size=1)
+    pred = np.argmax(p_validate, axis=-1)
+
+    # measure accuracy over the whole validation set
+    print('accuracy: {}'.format(perf.accuracy(pred, y_val)))
+    print('IU_avg: {}'.format(perf.IU_avg(pred, y_val)))
+
+    print('IU')
+    for c in range(nclasses):
+        iu = perf.IU(pred, y_val, c)
+        print('IU({}): {}'.format(c, iu))
 
 if __name__ == '__main__':
     train_pixelnet()
