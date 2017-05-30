@@ -21,3 +21,17 @@ def load_dataset(hfile, cropbar=None):
             labels.append(l)
             
     return np.array(images), np.array(labels), np.array(names)
+
+def preprocess_images(normalize=False):
+    """ preprocess images """
+    if normalize:
+        # zero-mean and unit variance scaling
+        images = (images - np.mean(images)) / np.std(images)
+    else:
+        # just remap intensities to (-1,1)
+        images = images / 255.0
+        images = images - 0.5
+        images = 2 * images
+
+    return images
+    

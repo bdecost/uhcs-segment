@@ -13,19 +13,18 @@ sys.path.append('../pixelnet')
 
 from pixelnet.pixelnet import pixelnet_model
 from pixelnet.utils import random_training_samples, random_validation_samples
-from uhcsseg.data import load_dataset
+from uhcsseg import data
 
 # suppress some of the noisier tensorflow log messages
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 if __name__ == '__main__':
     datafile = 'data/uhcs.h5'
-    images, labels, names = load_dataset(datafile, cropbar=38)
-    print(images.shape)
-    # normalize dataset
-    images = (images - np.mean(images)) / np.std(images)
+    images, labels, names = data.load_dataset(datafile, cropbar=38)
+
+    images = data.preprocess_images(images)
     images = images[:,:,:,np.newaxis]
-    
+
     N, h, w, _ = images.shape
 
     run_id = 1
