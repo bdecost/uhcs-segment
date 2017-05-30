@@ -22,7 +22,7 @@ def load_dataset(hfile, cropbar=None):
             
     return np.array(images), np.array(labels), np.array(names)
 
-def preprocess_images(normalize=False):
+def preprocess_images(images, normalize=False):
     """ preprocess images """
     if normalize:
         # zero-mean and unit variance scaling
