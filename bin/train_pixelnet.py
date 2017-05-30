@@ -44,11 +44,10 @@ if __name__ == '__main__':
     X_val, y_val = images[ntrain:], labels[ntrain:]
     
     N, h, w, _ = images.shape
-        
-    steps_per_epoch = ntrain * h * w / (batchsize*npix)
+
     # steps_per_epoch = 100
-    print('steps_per_epoch:')
-    print(steps_per_epoch)
+    steps_per_epoch = ntrain * h * w / (batchsize*npix)
+    print('steps_per_epoch: {}'.format(steps_per_epoch))
     
     opt = optimizers.Adam()
     model = pixelnet_model()
