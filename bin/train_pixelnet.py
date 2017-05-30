@@ -13,7 +13,7 @@ sys.path.append('../pixelnet')
 
 from pixelnet.pixelnet import pixelnet_model
 from pixelnet.utils import random_training_samples, random_validation_samples
-from uhcsseg.data import uhcs, spheroidite
+from uhcsseg.data import load_dataset
 
 # suppress some of the noisier tensorflow log messages
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'

@@ -10,13 +10,13 @@ from skimage import filters
 import sys
 sys.path.append(os.getcwd())
 
-from uhcsseg import io
+from uhcsseg import data
 @click.command()
 @click.argument('hfile', type=click.Path())
 @click.option('-r', '--resultsfile', default='data/sph_thresh.h5', type=click.Path())
 def threshold(hfile, resultsfile):
 
-    images, labels, keys = io.load_dataset(hfile)
+    images, labels, keys = data.load_dataset(hfile)
 
     for image, label, key in zip(images, labels, keys):
 

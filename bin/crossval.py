@@ -9,7 +9,7 @@ from sklearn.model_selection import LeaveOneOut
 import sys
 sys.path.append(os.getcwd())
 
-from uhcsseg import io
+from uhcsseg import data
 from uhcsseg import hypercolumn, tensorsgd
 
 @click.command()
@@ -22,7 +22,7 @@ def crossval(hfile, resultsfile, crop):
     Read data from hdf5 HFILE with input images and annotations.
     """
     cv = LeaveOneOut()
-    images, labels, keys = io.load_dataset(hfile, cropbar=crop)
+    images, labels, keys = data.load_dataset(hfile, cropbar=crop)
 
     for train_idx, val_idx in cv.split(images):
         print('CV iteration {}'.format(val_idx[0]))
