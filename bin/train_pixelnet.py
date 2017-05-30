@@ -17,10 +17,16 @@ from pixelnet.utils import random_pixel_samples
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 @click.command()
-@click.option('--dataset', default='uhcs', choices=['uhcs', 'spheroidite'])
+@click.option('--dataset', default='uhcs', type=click.Choice(['uhcs', 'spheroidite']))
 def train_pixelnet(dataset):
+    
     datadir = 'data'
     datafile = os.path.join(datadir, '{}.h5'.format(dataset))
+    if dataset == 'uhcs':
+        cropbar = 38
+    else:
+        cropbar = None
+        
     run_id = 1
     batchsize = 4
     ntrain = 20
@@ -33,7 +39,7 @@ def train_pixelnet(dataset):
     model_dir = os.path.join('models', 'crossval', dataset_name, 'run{:02d}'.format(run_id))
     os.makedirs(model_dir, exist_ok=True)
     
-    images, labels, names = data.load_dataset(datafile, cropbar=38)
+    images, labels, names = data.load_dataset(datafile, cropbar=cropbar)
     images = data.preprocess_images(images)
 
     # add a channel axis (of size 1 since these are grayscale inputs)
