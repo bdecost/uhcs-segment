@@ -19,20 +19,21 @@ from uhcsseg import data
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 if __name__ == '__main__':
+    
     datafile = 'data/uhcs.h5'
-    images, labels, names = data.load_dataset(datafile, cropbar=38)
-
-    images = data.preprocess_images(images)
-    images = images[:,:,:,np.newaxis]
-
-    N, h, w, _ = images.shape
-
     run_id = 1
     batchsize = 4
     ntrain = 20
     npix = 2048
     nclasses = 4
     max_epochs = 10
+    validation_steps = 10
+    
+    images, labels, names = data.load_dataset(datafile, cropbar=38)
+    images = data.preprocess_images(images)
+    images = images[:,:,:,np.newaxis]
+
+    N, h, w, _ = images.shape
     
     dataset_name, ext = os.path.splitext(os.basename(datafile))
     model_dir = os.path.join('models', 'crossval', dataset_name, 'run{:02d}'.format(run_id))
@@ -65,5 +66,5 @@ if __name__ == '__main__':
         epochs=max_epochs,
         callbacks=[csv_logger, checkpoint, early_stopping],
         validation_data=random_validation_samples(images, labels),
-        validation_steps=10
+        validation_steps=validation_steps
     )
