@@ -28,6 +28,10 @@ if __name__ == '__main__':
     nclasses = 4
     max_epochs = 10
     validation_steps = 10
+
+    dataset_name, ext = os.path.splitext(os.basename(datafile))
+    model_dir = os.path.join('models', 'crossval', dataset_name, 'run{:02d}'.format(run_id))
+    os.path.makedirs(model_dir, exist_ok=True)
     
     images, labels, names = data.load_dataset(datafile, cropbar=38)
     images = data.preprocess_images(images)
@@ -40,11 +44,7 @@ if __name__ == '__main__':
     X_val, y_val = images[ntrain:], labels[ntrain:]
     
     N, h, w, _ = images.shape
-    
-    dataset_name, ext = os.path.splitext(os.basename(datafile))
-    model_dir = os.path.join('models', 'crossval', dataset_name, 'run{:02d}'.format(run_id))
-    os.path.makedirs(model_dir, exist_ok=True)
-    
+        
     steps_per_epoch = ntrain * h * w / (batchsize*npix)
     # steps_per_epoch = 100
     print('steps_per_epoch:')
