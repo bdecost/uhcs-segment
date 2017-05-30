@@ -12,7 +12,7 @@ sys.path.append(os.getcwd())
 sys.path.append('../pixelnet')
 
 from pixelnet.pixelnet import pixelnet_model
-from pixelnet.utils import random_training_samples, random_validation_samples
+from pixelnet.utils import random_pixel_samples
 from uhcsseg import data
 
 # suppress some of the noisier tensorflow log messages
