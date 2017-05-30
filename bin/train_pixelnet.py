@@ -18,24 +18,26 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 @click.command()
 @click.option('--dataset', default='uhcs', type=click.Choice(['uhcs', 'spheroidite']))
-def train_pixelnet(dataset):
+@click.option('--batchsize', default=4, type=int)
+@click.option('--npix', default=2048, type=int)
+@click.option('--max-epochs', default=10, type=int)
+@click.option('--validation-steps', default=10, type=int)
+def train_pixelnet(dataset, batchsize, npix, max_epochs, validation_steps):
+
+    run_id = 1
+    ntrain = 20
     
     datadir = 'data'
     datafile = os.path.join(datadir, '{}.h5'.format(dataset))
     if dataset == 'uhcs':
+        nclasses = 4
         cropbar = 38
-    else:
+    elif dataset == 'spheroidite':
+        nclasses = 2
         cropbar = None
         
-    run_id = 1
-    batchsize = 4
-    ntrain = 20
-    npix = 2048
-    nclasses = 4
-    max_epochs = 10
-    validation_steps = 10
+    dataset_name, ext = os.path.splitext(os.basename(datafile))
 
-    dataset_name, ext = os.path.splitext(os.path.basename(datafile))
     model_dir = os.path.join('models', 'crossval', dataset_name, 'run{:02d}'.format(run_id))
     os.makedirs(model_dir, exist_ok=True)
     
