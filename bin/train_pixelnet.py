@@ -2,7 +2,6 @@
 import os
 import click
 import numpy as np
-
 from keras import optimizers
 from keras.callbacks import CSVLogger, ModelCheckpoint, EarlyStopping
 
@@ -13,7 +12,6 @@ sys.path.append('../pixelnet')
 from uhcsseg import data
 from pixelnet.pixelnet import pixelnet_model
 from pixelnet.utils import random_pixel_samples
-
 
 # suppress some of the noisier tensorflow log messages
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
