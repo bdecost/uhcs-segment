@@ -32,7 +32,8 @@ if __name__ == '__main__':
     ntrain = 20
     npix = 2048
     nclasses = 4
-
+    max_epochs = 10
+    
     dataset_name, ext = os.path.splitext(os.basename(datafile))
     model_dir = os.path.join('models', 'crossval', dataset_name, 'run{:02d}'.format(run_id))
     os.path.makedirs(model_dir, exist_ok=True)
@@ -61,7 +62,7 @@ if __name__ == '__main__':
     f = model.fit_generator(
         random_training_samples(images, labels),
         steps_per_epoch,
-        epochs=10,
+        epochs=max_epochs,
         callbacks=[csv_logger, checkpoint, early_stopping],
         validation_data=random_validation_samples(images, labels),
         validation_steps=10
