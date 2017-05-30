@@ -16,9 +16,11 @@ from pixelnet.utils import random_pixel_samples
 # suppress some of the noisier tensorflow log messages
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
-if __name__ == '__main__':
-    
-    datafile = 'data/uhcs.h5'
+@click.command()
+@click.option('--dataset', default='uhcs', choices=['uhcs', 'spheroidite'])
+def train_pixelnet(dataset):
+    datadir = 'data'
+    datafile = os.path.join(datadir, '{}.h5'.format(dataset))
     run_id = 1
     batchsize = 4
     ntrain = 20
@@ -71,3 +73,6 @@ if __name__ == '__main__':
         validation_data=random_pixel_samples(X_val, y_val),
         validation_steps=validation_steps
     )
+
+if __name__ == '__main__':
+    train_pixelnet()
