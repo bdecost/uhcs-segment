@@ -93,7 +93,7 @@ def train_pixelnet(dataset, batchsize, npix, max_epochs, validation_steps):
     model.load_weights(best_weights)
 
     # run with batch_size=1 for inference due to dense feature upsampling
-    p_validate = model.predict(Xval, batch_size=1)
+    p_validate = model.predict(X_val, batch_size=1)
     pred = np.argmax(p_validate, axis=-1)
 
     # measure accuracy over the whole validation set
