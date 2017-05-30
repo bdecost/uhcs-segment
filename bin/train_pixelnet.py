@@ -31,8 +31,14 @@ if __name__ == '__main__':
     
     images, labels, names = data.load_dataset(datafile, cropbar=38)
     images = data.preprocess_images(images)
+
+    # add a channel axis (of size 1 since these are grayscale inputs)
     images = images[:,:,:,np.newaxis]
 
+    # train/validation split
+    X_train, y_train = images[:ntrain], labels[:ntrain]
+    X_val, y_val = images[ntrain:], labels[ntrain:]
+    
     N, h, w, _ = images.shape
     
     dataset_name, ext = os.path.splitext(os.basename(datafile))
@@ -61,10 +67,10 @@ if __name__ == '__main__':
 
     # note: keras/engine/training.py:L132 --> is not None
     f = model.fit_generator(
-        random_training_samples(images, labels),
+        random_pixel_samples(X_train, y_train),
         steps_per_epoch,
         epochs=max_epochs,
         callbacks=[csv_logger, checkpoint, early_stopping],
-        validation_data=random_validation_samples(images, labels),
+        validation_data=random_pixel_samples(X_val, y_val),
         validation_steps=validation_steps
     )
