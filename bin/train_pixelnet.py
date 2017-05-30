@@ -36,9 +36,7 @@ def train_pixelnet(dataset, batchsize, npix, max_epochs, validation_steps):
         nclasses = 2
         cropbar = None
         
-    dataset_name, ext = os.path.splitext(os.basename(datafile))
-
-    model_dir = os.path.join('models', 'crossval', dataset_name, 'run{:02d}'.format(run_id))
+    model_dir = os.path.join('models', 'crossval', dataset, 'run{:02d}'.format(run_id))
     os.makedirs(model_dir, exist_ok=True)
     
     images, labels, names = data.load_dataset(datafile, cropbar=cropbar)
