@@ -50,7 +50,7 @@ if __name__ == '__main__':
     checkpoint = ModelCheckpoint(
         os.path.join(
             model_dir,
-            'weights.{epoch:02d}-{val_loss:.2f}.hdf5'
+            'weights.{epoch:03d}-{val_loss:.4f}.hdf5'
         ),
         save_best_only=True,
         save_weights_only=True
