@@ -31,7 +31,7 @@ if __name__ == '__main__':
 
     dataset_name, ext = os.path.splitext(os.path.basename(datafile))
     model_dir = os.path.join('models', 'crossval', dataset_name, 'run{:02d}'.format(run_id))
-    os.path.makedirs(model_dir, exist_ok=True)
+    os.makedirs(model_dir, exist_ok=True)
     
     images, labels, names = data.load_dataset(datafile, cropbar=38)
     images = data.preprocess_images(images)
