@@ -39,12 +39,11 @@ def validation_split(validation_set, names):
 @click.option('--max-epochs', default=10, type=int)
 @click.option('--validation-steps', default=10, type=int)
 @click.option('--run-id', default=0, type=int)
-def train_pixelnet(dataset, batchsize, npix, max_epochs, validation_steps):
+def train_pixelnet(dataset, batchsize, npix, max_epochs, validation_steps, run_id):
 
-    ntrain = 20
-    
     datadir = 'data'
     datafile = os.path.join(datadir, '{}.h5'.format(dataset))
+
     
     validation_set_path = os.path.join(datadir, '{}-validation-sets.json'.format(dataset))
     validation_set = load_validation_set(validation_set_path, run_id)
