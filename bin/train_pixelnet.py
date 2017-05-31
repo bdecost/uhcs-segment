@@ -87,11 +87,11 @@ def train_pixelnet(dataset, batchsize, npix, max_epochs, validation_steps, run_i
 
     # note: keras/engine/training.py:L132 --> is not None
     f = model.fit_generator(
-        random_pixel_samples(X_train, y_train),
+        random_pixel_samples(X_train, y_train, nclasses=nclasses),
         steps_per_epoch,
         epochs=max_epochs,
         callbacks=[csv_logger, checkpoint, early_stopping],
-        validation_data=random_pixel_samples(X_val, y_val),
+        validation_data=random_pixel_samples(X_val, y_val, nclasses=nclasses),
         validation_steps=validation_steps
     )
 
