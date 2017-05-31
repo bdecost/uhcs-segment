@@ -1,6 +1,9 @@
 #!/usr/bin/env python
+from __future__ import division, print_function
+
 import os
 import glob
+import json
 import click
 import numpy as np
 from keras import optimizers
@@ -17,19 +20,35 @@ from pixelnet.utils import random_pixel_samples
 # suppress some of the noisier tensorflow log messages
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
+def load_validation_set(validation_set_path, run_id):
+    with open(validation_set_path, 'r') as jf:
+        jdata = json.load(jf)
+        return jdata[str(run_id)]
+
+def validation_split(validation_set, names):
+    """ take a list of string keys for validation set images and index into the data array """
+    train_set = list(filter(lambda s: s not in validation_set, names))
+    val_idx = [names.tolist().index(k) for k in validation_set]
+    train_idx = [names.tolist().index(k) for k in train_set]
+    return train_idx, val_idx
+
 @click.command()
 @click.option('--dataset', default='uhcs', type=click.Choice(['uhcs', 'spheroidite']))
 @click.option('--batchsize', default=4, type=int)
 @click.option('--npix', default=2048, type=int)
 @click.option('--max-epochs', default=10, type=int)
 @click.option('--validation-steps', default=10, type=int)
+@click.option('--run-id', default=0, type=int)
 def train_pixelnet(dataset, batchsize, npix, max_epochs, validation_steps):
 
-    run_id = 1
     ntrain = 20
     
     datadir = 'data'
     datafile = os.path.join(datadir, '{}.h5'.format(dataset))
+    
+    validation_set_path = os.path.join(datadir, '{}-validation-sets.json'.format(dataset))
+    validation_set = load_validation_set(validation_set_path, run_id)
+    
     if dataset == 'uhcs':
         nclasses = 4
         cropbar = 38
@@ -47,11 +66,17 @@ def train_pixelnet(dataset, batchsize, npix, max_epochs, validation_steps):
     images = images[:,:,:,np.newaxis]
 
     # train/validation split
-    val_idx = np.sort(np.random.choice(range(N), size=N-ntrain, replace=False))
-        
-    X_train, y_train = images[:ntrain], labels[:ntrain]
-    X_val, y_val = images[ntrain:], labels[ntrain:]
+    train_idx, val_idx = validation_split(validation_set, names)
+    ntrain = len(train_idx)
     
+    X_train, y_train, names_train = images[train_idx], labels[train_idx] names[train_idx]
+    X_val, y_val, names_val = images[val_idx], labels[val_idx], names[val_idx]
+
+    # write the validation set to the model directory as well...
+    with open(os.path.join(model_dir, 'validation_set.txt'), 'w') as vf:
+        for name in names_val:
+            print(name, file=vf)
+
     N, h, w, _ = images.shape
 
     # steps_per_epoch = 100
