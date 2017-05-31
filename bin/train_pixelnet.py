@@ -47,6 +47,8 @@ def train_pixelnet(dataset, batchsize, npix, max_epochs, validation_steps):
     images = images[:,:,:,np.newaxis]
 
     # train/validation split
+    val_idx = np.sort(np.random.choice(range(N), size=N-ntrain, replace=False))
+        
     X_train, y_train = images[:ntrain], labels[:ntrain]
     X_val, y_val = images[ntrain:], labels[ntrain:]
     
@@ -92,18 +94,19 @@ def train_pixelnet(dataset, batchsize, npix, max_epochs, validation_steps):
     model = pixelnet_model(nclasses=nclasses, inference=True)
     model.load_weights(best_weights)
 
-    # run with batch_size=1 for inference due to dense feature upsampling
-    p_validate = model.predict(X_val, batch_size=1)
-    pred = np.argmax(p_validate, axis=-1)
+    for X, y in [(X_train, y_train), (X_val, y_val)]:
+        # run with batch_size=1 for inference due to dense feature upsampling
+        p_validate = model.predict(X, batch_size=1)
+        pred = np.argmax(p_validate, axis=-1)
 
-    # measure accuracy over the whole validation set
-    print('accuracy: {}'.format(perf.accuracy(pred, y_val)))
-    print('IU_avg: {}'.format(perf.IU_avg(pred, y_val)))
+        # measure accuracy over the whole validation set
+        print('accuracy: {}'.format(perf.accuracy(pred, y)))
+        print('IU_avg: {}'.format(perf.IU_avg(pred, y)))
 
-    print('IU')
-    for c in range(nclasses):
-        iu = perf.IU(pred, y_val, c)
-        print('IU({}): {}'.format(c, iu))
+        print('IU')
+        for c in range(nclasses):
+            iu = perf.IU(pred, y, c)
+            print('IU({}): {}'.format(c, iu))
 
 if __name__ == '__main__':
     train_pixelnet()
