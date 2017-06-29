@@ -1,11 +1,14 @@
 import json
 import h5py
 import numpy as np
+from scipy.misc import bytescale
 
 def load_record(f, key, cropbar=None):
     micrograph = f[key]
     im = micrograph['image'][...]
     l = micrograph['labels'][...]
+
+    im = bytescale(im).astype(np.float32)
 
     if cropbar is not None and cropbar > 0:
         # remove micron bar from bottom of image
