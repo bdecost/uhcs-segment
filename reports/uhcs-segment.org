@@ -1,5 +1,5 @@
-#+TITLE: Deep off-the-shelf pixelwise features for semantic segmentation of ultrahigh carbon steel microstructures
-#+AUTHOR: Brian L. DeCost, Toby Francis, Elizabeth A. Holm
+#+TITLE: Deep pixelwise features for semantic segmentation of ultrahigh carbon steel microstructures
+#+AUTHOR: 
 
 #+OPTIONS:   H:4 num:t toc:nil \n:nil @:t ::t |:t ^:t -:t f:t *:t <:t
 #+OPTIONS:   TeX:t LaTeX:t skip:nil d:nil todo:nil pri:nil tags:not-in-toc
@@ -14,7 +14,7 @@
 #+LATEX_HEADER: \graphicspath{{figures/}}
 
 #+BEGIN_ABSTRACT
-We apply a deep off-the-shelf convolutional neural network image representation to enable novel automated microstructure segmentation applications for complex microstructures typically evaluated manually and subjectively.
+We apply a deep convolutional neural network segmentation model to enable novel automated microstructure segmentation applications for complex microstructures typically evaluated manually and subjectively.
 We explore two microstructure segmentation tasks in an openly-available ultrahigh carbon steel microstructure dataset\cite{decost2017uhcshb}: segmenting cementite particles in the spheroidized matrix, and segmenting larger fields of view featuring grain boundary carbide, spheroidized particle matrix, particle-free grain boundary denuded zone, Widmanstätten cementite.
 We also demonstrate how these data-driven microstructure segmentation models can be combined to obtain empirical cementite particle size distributions from more complex micrographs containing multiple microconstituents.
 #+END_ABSTRACT
@@ -28,20 +28,42 @@ Our primary contributions are:
 - Exploring novel means of expanding contemporary quantitative microstructure measurement techniques to more complex structures
 
 * Methods
-** Labeled segmentation datasets
+** Segmentation model
+*** PixelNet architecture
+We use a PixelNet \cite{bansal2017} architecture.
+General description of training with sparse upsampling (link to our to-be-published implementation in a footnote).
+General description of inference with dense upsampling.
+Brief comparison with e.g. SegNet.
+Motivation: training from scratch on a small dataset.
 
-#  To make the manuscript more compact, basically realize that this essentially duplicates Figure 1c and 1d, and add the corresponding Figure 1a and 1b panels to this one.
+- BatchNorm - Conv - ReLU layers
+- Specify layer configurations, including skip connections
+
+TODO: update architecture schematic with learned-from-scratch models, and s/VGG/conv/
+
 \begin{figure}[!htbp]
   \frame{
   \includegraphics[width=\textwidth]{architecture}}
-  \caption{Inspiration: PixelNet. Top: semantic microstructure segmentation based on manually annotated UHCS microconstituents, including grain boundary carbide (light blue), ferritic matrix (dark blue), spheroidite particles (yellow), and Widmanstätten cementite (red). Bottom: Spheroidite particle segmentation with semiautomated annotations\cite{hecht2017}.}
-  \label{fig:hypercolumnschematic}
+  \caption{Inspiration: PixelNet. Top: semantic microstructure segmentation based on manually annotated UHCS microconstituents, including proeutectoid grain boundary cementite (light blue), ferritic matrix (dark blue), spheroidite particles (yellow), and Widmanstätten cementite (green). Bottom: Spheroidite particle segmentation with semiautomated annotations\cite{hecht2017}.}
+  \label{fig:architecture}
 \end{figure}
 
-*** Semi-automated spheroidite particle segmentation task
-*** Manual labeling for abstract microconstituent segmentation
+*** Training
+- Initialization
+- Pixel sampling strategies (random vs balanced? whatever we stick with...)
+- Adam (or SGD+Nesterov with cyclic learning rate if it works?) (specify learning rate, etc).
+- Dropout and regularization (weight decay)
+- Specify loss function
+- Label smoothing (if any in the final version)
+- Document data augmentation (rotation with mirror padding/boundary conditions, flips, and scaling for now)
 
-*** Performance evaluation
+** Semi-automated spheroidite particle annotation
+Matt's ActaMat paper \cite{hecht2017}; describe ImageJ workflow.
+
+** Manual labeling for abstract microconstituent segmentation
+We manually labeled a subset of the UHCS dataset\cite{uhcsdb,uhcsdata} using the open source medical image annotation toolkit MITK \cite{mitk}.
+
+** Performance evaluation
 We report the standard evaluation metrics for semantic segmentation tasks: pixel accuracy (AC) and region intersection over union (IU), both for individual classes and averaged over all four microstructure classes.
 For each of these metrics, a higher score indicates better performance.
 The intersection over union metric $IU(c)$ for class $c$ is the ratio of correctly predicted pixels of class $c$ to the union of pixels with either ground truth or predicted class $c$:
@@ -55,14 +77,19 @@ where $\land$ denotes logical conjunction (logical and) and $\lor$ denotes inclu
 For the spheroidite particle segmentation task, we also report performance metrics comparing particle size distributions obtained from the model predictions with those obtained from the ground truth annotations (as reported in \cite{hecht2017}.
 The PSD KS metric indicates failure rates for  the two-sample Kolmogorov-Smirnov test to each pair of model and ground truth PSDs (lower is better).
 
+** Computing denuded zone widths
+
 
 * Results and Discussion
+# add validation predictions for the entire dataset as supplemental figures?
 ** Spheroidite particle segmentation
 \begin{figure}[!htbp]
-  \includegraphics[width=\textwidth]{spheroiditeresults}
+  \includegraphics[width=\textwidth]{validation_predictions_spheroidite_00}
   \caption{Independent test set predictions for the spheroidite particle segmentation task.}
   \label{fig:spheroiditeresults}
 \end{figure}
+
+TODO: consider watershedding particle prediction maps before comparing PSD with annotations.
 
 #+CAPTION: Segmentation performance on validation sets
 #+NAME: tab:segmentationperf
@@ -79,8 +106,8 @@ The PSD KS metric indicates failure rates for  the two-sample Kolmogorov-Smirnov
 # Should we try to answer this question in the current study, or down the road a bit?
 
 \begin{figure}[!htbp]
-  \includegraphics[width=\textwidth]{semanticresults}
-  \caption{Independent test set predictions for the complex microconstituent segmentation task.}
+  \includegraphics[width=\textwidth]{validation_predictions_uhcs_05}
+  \caption{Validation set predictions for the complex microconstituent segmentation task.}
   \label{fig:microconstituentresults}
 \end{figure}
 
@@ -117,14 +144,20 @@ The PSD KS metric indicates failure rates for  the two-sample Kolmogorov-Smirnov
 
 
 
-** Combined segmentation models
+** Automated measurement of abstract microstructure
 # note: change this to input, class predictions, masked particle predictions.
 # use the same micrographs as in the abstract microstructure segmentation task.
 \begin{figure}[!htbp]
-  \includegraphics[width=\textwidth]{chainedresults}
+  \includegraphics[width=\textwidth]{fused_predictions_00}
   \caption{Independent test set predictions for spheroidite segmentation results in micrographs with multiple microconstituents.}
-  \label{fig:chainedresults}
+  \label{fig:fused}
 \end{figure}
+
+TODO: add a figure showing measured particle size distributions from Figure \ref{fig:fused}.
+
+TODO: add a figure comparing measured denuded zone widths using ground truth maps and validation set predictions as input.
+Compare with Matt's manual annotations where appropriate?
+
 * Conclusions
 
 \section*{Acknowledgements}
