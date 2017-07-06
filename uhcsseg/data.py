@@ -3,6 +3,14 @@ import h5py
 import numpy as np
 from scipy.misc import bytescale
 
+from enum import IntEnum
+class Microconstituent(IntEnum):
+    """ Enumerate integer labels for microconstituents """
+    matrix = 0
+    network = 1
+    spheroidite = 2
+    widmanstatten = 3
+
 def load_record(f, key, cropbar=None):
     micrograph = f[key]
     im = micrograph['image'][...]
