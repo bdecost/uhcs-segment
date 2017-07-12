@@ -11,6 +11,14 @@ class Microconstituent(IntEnum):
     spheroidite = 2
     widmanstatten = 3
 
+# throw out these micrographs for the spheroidite task
+# the input has a weird intensity distribution
+exclude = {
+    '800C-85H-Q-4',
+    '800C-8H-Q-2',
+    '800C-90M-Q-1'
+}
+
 def load_record(f, key, cropbar=None):
     micrograph = f[key]
     im = micrograph['image'][...]
@@ -30,6 +38,8 @@ def load_dataset(hfile, cropbar=None):
     images, labels, names = [], [], []
     with h5py.File(hfile, 'r') as f:
         for key in f:
+            if key in exclude:
+                continue
             im, l = load_record(f, key, cropbar=cropbar)   
             names.append(key)       
             images.append(im)
