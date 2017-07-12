@@ -17,10 +17,11 @@ def colorize_labels(lab, mark=False):
     # similar to default matplotlib colors
     # colors = ['blue', 'aqua', 'goldenrod', 'dark red', 'purple']
     colors = ["cobalt", "aqua", "amber", "true green", "dark red"]
-    
-    colors = colors[np.min(lab):]
-    colors = xkcd_palette(colors)
-    c = label2rgb(lab, colors=colors)
+    colors = np.array(xkcd_palette(colors))
+
+    # map colors with numpy fancy indexing
+    c = colors[lab]
+  
     if mark:
         c = mark_boundaries(c, label_img=lab, color=(0,0,0), mode='inner')
     return c
