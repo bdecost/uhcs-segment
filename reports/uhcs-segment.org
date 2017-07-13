@@ -13,14 +13,21 @@
 #+LATEX_HEADER: \usepackage{subcaption}
 #+LATEX_HEADER: \graphicspath{{figures/}}
 
+#+LATEX_HEADER: \usepackage[backref=true,backend=biber,sorting=none,citestyle=numeric-comp]{biblatex}
+# #+LATEX_HEADER: \usepackage[backend=biber,bibencoding=ascii,language=auto,bibstyle=nature,citestyle=numeric-comp,url=true, doi=true,sorting=none, maxbibnames=10,natbib=true]{biblatex}
+#+LATEX_HEADER: \addbibresource{uhcs-segment.bib}
+# \renewcommand*{\bibfont}{\scriptsize}
+#+LATEX_HEADER: \hypersetup{colorlinks=true}
+
+
 #+BEGIN_ABSTRACT
 We apply a deep convolutional neural network segmentation model to enable novel automated microstructure segmentation applications for complex microstructures typically evaluated manually and subjectively.
-We explore two microstructure segmentation tasks in an openly-available ultrahigh carbon steel microstructure dataset\cite{decost2017uhcshb}: segmenting cementite particles in the spheroidized matrix, and segmenting larger fields of view featuring grain boundary carbide, spheroidized particle matrix, particle-free grain boundary denuded zone, Widmanstätten cementite.
+We explore two microstructure segmentation tasks in an openly-available ultrahigh carbon steel microstructure dataset cite:uhcsdb: segmenting cementite particles in the spheroidized matrix, and segmenting larger fields of view featuring grain boundary carbide, spheroidized particle matrix, particle-free grain boundary denuded zone, Widmanstätten cementite.
 We also demonstrate how these data-driven microstructure segmentation models can be combined to obtain empirical cementite particle size distributions from more complex micrographs containing multiple microconstituents.
 #+END_ABSTRACT
 
 * Introduction
-Openly available microstructure dataset \cite{decost2017uhcshb,hecht2017}.
+Openly available microstructure dataset cite:uhcsdb,hecht2016,hecht2017.
 
 Our primary contributions are:
 - Establishing two novel microstructure segmentation benchmark datasets
@@ -30,7 +37,7 @@ Our primary contributions are:
 * Methods
 ** Segmentation model
 *** PixelNet architecture
-We use a PixelNet \cite{bansal2017} architecture.
+We use a PixelNet cite:bansal2017 architecture.
 General description of training with sparse upsampling (link to our to-be-published implementation in a footnote).
 General description of inference with dense upsampling.
 Brief comparison with e.g. SegNet.
@@ -44,7 +51,7 @@ TODO: update architecture schematic with learned-from-scratch models, and s/VGG/
 \begin{figure}[!htbp]
   \frame{
   \includegraphics[width=\textwidth]{architecture}}
-  \caption{Inspiration: PixelNet. Top: semantic microstructure segmentation based on manually annotated UHCS microconstituents, including proeutectoid grain boundary cementite (light blue), ferritic matrix (dark blue), spheroidite particles (yellow), and Widmanstätten cementite (green). Bottom: Spheroidite particle segmentation with semiautomated annotations\cite{hecht2017}.}
+  \caption{Inspiration: PixelNet. Top: semantic microstructure segmentation based on manually annotated UHCS microconstituents, including proeutectoid grain boundary cementite (light blue), ferritic matrix (dark blue), spheroidite particles (yellow), and Widmanstätten cementite (green). Bottom: Spheroidite particle segmentation with semiautomated annotations cite:hecht2017.}
   \label{fig:architecture}
 \end{figure}
 
@@ -58,10 +65,10 @@ TODO: update architecture schematic with learned-from-scratch models, and s/VGG/
 - Document data augmentation (rotation with mirror padding/boundary conditions, flips, and scaling for now)
 
 ** Semi-automated spheroidite particle annotation
-Matt's ActaMat paper \cite{hecht2017}; describe ImageJ workflow.
+Matt's ActaMat paper cite:hecht2017; describe ImageJ workflow.
 
 ** Manual labeling for abstract microconstituent segmentation
-We manually labeled a subset of the UHCS dataset\cite{uhcsdb,uhcsdata} using the open source medical image annotation toolkit MITK \cite{mitk}.
+We manually labeled a subset of the UHCS dataset cite:uhcsdb,uhcsdata using the open source medical image annotation toolkit MITK cite:mitk.
 
 ** Performance evaluation
 We report the standard evaluation metrics for semantic segmentation tasks: pixel accuracy (AC) and region intersection over union (IU), both for individual classes and averaged over all four microstructure classes.
@@ -74,10 +81,20 @@ IU(c) = \frac{\sum_i (o_i == c \land y_i == c)}{\sum_i (o_i == c \lor y_i == c) 
 
 where $\land$ denotes logical conjunction (logical and) and $\lor$ denotes inclusive disjunction (logical or), $o_i$ are the predictions for each pixel $i$, and $y_i$ are the ground truth labels for each pixel.
 
-For the spheroidite particle segmentation task, we also report performance metrics comparing particle size distributions obtained from the model predictions with those obtained from the ground truth annotations (as reported in \cite{hecht2017}.
+For the spheroidite particle segmentation task, we also report performance metrics comparing particle size distributions obtained from the model predictions with those obtained from the ground truth annotations (as reported in cite:hecht2017.
 The PSD KS metric indicates failure rates for  the two-sample Kolmogorov-Smirnov test to each pair of model and ground truth PSDs (lower is better).
 
 ** Computing denuded zone widths
+
+Input: microconstituent prediction map.
+We quantify the width of the denuded zone by computing for each matrix-particle interface pixel the minimum distance to the network phase.
+In practice we compute a map of euclidean distance to the network phase, and select the measurements at the denuded zone interface.
+
+To obtain the denuded zone interface, we apply several image processing techniques to clean up the microconstituent prediction map, so that only the matrix predictions associated with the diffusion-limited denuded zone adjacent to the proeutectoid cementite network remain.
+A morphological filling operation removes any matrix pixels within the network.
+Matrix regions that are not connected to the network by applying a morphological closing to matrix phase and removing matrix segments that do not intersect the network phase.
+Finally, we remove any matrix predictions that are closer to a widmanstatten region than to a network region, and subsequently remove the widmanstatten regions.
+The region boundaries on the cleaned up label image (shown in Figure \ref{fig:denuded_zone}) include only the interface of the proeutectoid cementite network phase (indicated in blue) and the diffuse interface of the denuded zone (indicated in yellow).
 
 
 * Results and Discussion
@@ -144,7 +161,7 @@ TODO: consider watershedding particle prediction maps before comparing PSD with 
 
 
 
-** Automated measurement of abstract microstructure
+** Automated measurement of abstract microstructure features
 # note: change this to input, class predictions, masked particle predictions.
 # use the same micrographs as in the abstract microstructure segmentation task.
 \begin{figure}[!htbp]
@@ -155,6 +172,13 @@ TODO: consider watershedding particle prediction maps before comparing PSD with 
 
 TODO: add a figure showing measured particle size distributions from Figure \ref{fig:fused}.
 
+
+\begin{figure}[!htbp]
+  \includegraphics[width=\textwidth]{denuded_zone}
+  \caption{Denuded zone width distribution measured from semantic microconstituent prediction map. The network interface is shown in blue and the particle matrix interface is shown in yellow.}
+  \label{fig:denuded_zone}
+\end{figure}
+
 TODO: add a figure comparing measured denuded zone widths using ground truth maps and validation set predictions as input.
 Compare with Matt's manual annotations where appropriate?
 
@@ -162,10 +186,8 @@ Compare with Matt's manual annotations where appropriate?
 
 \section*{Acknowledgements}
 We gratefully acknowledge funding for this work through National Science Foundation grants DMR-1307138 and DMR-1501830, and through the John and Claire Bertucci Foundation.
-The UHCS micrographs were graciously provided by Matthew Hecht, Yoosuf Picard, and Bryan Webler (CMU)\cite{decost2017uhcshb}.
+The UHCS micrographs were graciously provided by Matthew Hecht, Yoosuf Picard, and Bryan Webler (CMU) cite:uhcshb.
 The spheroidite annotations were graciously provided by Matthew Hecht and Txai Sibley.
-The open source software projects Scikit-Learn\cite{sklearn} and keras\cite{keras} were essential to this work.
+The open source software projects Scikit-Learn cite:sklearn and keras cite:keras were essential to this work.
 
-\bibliographystyle{unsrt}
-\bibliography{uhcs-segment}
-
+\printbibliography
