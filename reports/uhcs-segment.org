@@ -1,4 +1,4 @@
-#+TITLE: Deep pixelwise features for semantic segmentation of ultrahigh carbon steel microstructures
+#+TITLE: Enabling high throughput quantitative metallography for complex microstructures with deep semantic segmentation models: a case study in ultrahigh carbon steel
 #+AUTHOR: 
 
 #+OPTIONS:   H:4 num:t toc:nil \n:nil @:t ::t |:t ^:t -:t f:t *:t <:t
@@ -50,8 +50,8 @@ TODO: update architecture schematic with learned-from-scratch models, and s/VGG/
 
 \begin{figure}[!htbp]
   \frame{
-  \includegraphics[width=\textwidth]{architecture}}
-  \caption{Inspiration: PixelNet. Top: semantic microstructure segmentation based on manually annotated UHCS microconstituents, including proeutectoid grain boundary cementite (light blue), ferritic matrix (dark blue), spheroidite particles (yellow), and Widmanstätten cementite (green). Bottom: Spheroidite particle segmentation with semiautomated annotations cite:hecht2017.}
+  \includegraphics[width=\textwidth]{architecture-scratch}}
+  \caption{Inspiration: PixelNet. Top: semantic microstructure segmentation based on manually annotated UHCS microconstituents, including proeutectoid grain boundary cementite (light blue), ferritic matrix (dark blue), spheroidite particles (yellow), and Widmanstätten cementite (green).}
   \label{fig:architecture}
 \end{figure}
 
@@ -98,10 +98,34 @@ The region boundaries on the cleaned up label image (shown in Figure \ref{fig:de
 
 
 * Results and Discussion
-# add validation predictions for the entire dataset as supplemental figures?
+TODO: add validation predictions for the entire dataset as supplemental figures?
+  
+** Semantic microconstituent segmentation
+Big question: how many micrographs do I need to annotate to get good perf?
+Should we try to answer this question in the current study, or down the road a bit?
+
+\begin{figure}[!htbp]
+  \includegraphics[width=\textwidth]{validation_predictions_uhcs_03}
+  \caption{Validation set predictions for the complex microconstituent segmentation task.}
+  \label{fig:microconstituentresults}
+\end{figure}
+
+
+#+CAPTION: Semantic segmentation performance averaged over validation images. Uncertainties are sample standard deviations calculated across validation folds.
+#+NAME: tab:semanticsegmentationperf
+| metric            | {1_2,2_2,3_3,4_3,5_3} | {1_2,2_2,3_3,4_3,5_3,7} |
+|-------------------+-----------------------+-------------------------|
+| matrix            | 64.7 $\pm$ 12.1       | 63.7 $\pm$ 10.2         |
+| network           | 86.0 $\pm$ 15.6       | 85.5 $\pm$ 17.8         |
+| spheroidite       | 90.5 $\pm$ 7.4        | 89.8 $\pm$ 7.1          |
+| widmanstätten      | 40.0 $\pm$ 18.6       | 31.1 $\pm$ 14.9         |
+| IU_{avg}          | 69.8 $\pm$ 11.2       | 68.8 $\pm$ 10.9         |
+| AC                | 91.6 $\pm$ 6.6        | 90.9 $\pm$ 6.6          |
+
+
 ** Spheroidite particle segmentation
 \begin{figure}[!htbp]
-  \includegraphics[width=\textwidth]{validation_predictions_spheroidite_00}
+  \includegraphics[width=\textwidth]{psd_run04}
   \caption{Independent test set predictions for the spheroidite particle segmentation task.}
   \label{fig:spheroiditeresults}
 \end{figure}
@@ -109,63 +133,21 @@ The region boundaries on the cleaned up label image (shown in Figure \ref{fig:de
 TODO: consider watershedding particle prediction maps before comparing PSD with annotations.
 
 #+CAPTION: Segmentation performance on validation sets
-#+NAME: tab:segmentationperf
-| model                            | matrix        | spheroidite   | IU_{avg}      | ACC           | PSD \chi^2 | PSD KS |
-|----------------------------------+---------------+---------------+---------------+---------------+------------+--------|
-| otsu                             | 86.2 \pm 7.2  | 53.7 \pm 12.1 | 69.9 \pm 9.3  | 88.1 \pm 6.1  |            |        |
-| thresholded blur\cite{hecht2017} | 0             | 0             | 0             | 0             |            |        |
-|----------------------------------+---------------+---------------+---------------+---------------+------------+--------|
-| conv-{1_2,2_2,3_3,4_3,5_3}       | 78.0 \pm 28.6 | 52.1 \pm 20.0 | 65.0 \pm 23.0 | 81.1 \pm 24.2 |            |        |
-
-  
-** Semantic microconstituent segmentation
-# big question: how many micrographs do I need to annotate to get good perf?
-# Should we try to answer this question in the current study, or down the road a bit?
-
-\begin{figure}[!htbp]
-  \includegraphics[width=\textwidth]{validation_predictions_uhcs_05}
-  \caption{Validation set predictions for the complex microconstituent segmentation task.}
-  \label{fig:microconstituentresults}
-\end{figure}
-
-
-#+CAPTION: Semantic segmentation performance averaged over LOOCV validation images. Uncertainties are sample standard deviations calculated across validation folds.
-#+NAME: tab:segmentationperf
-| metric             | VGG conv-{1_2,2_2,3_3,4_3,5_3} | train         |
-|--------------------+--------------------------------+---------------|
-| matrix             | 47.4 \pm 14.6                  | 50.5 \pm 14.2 |
-| network            | 65.8 \pm 20.4                  | 69.6 \pm 18.8 |
-| spheroidite        | 87.9 \pm 6.9                   | 89.1 \pm 5.9  |
-| widmanstatten      | 38.3 \pm 14.2                  | 40.4 \pm 14.2 |
-| IU_{avg}           | 59.8 \pm 11.4                  | 62.4 \pm 10.7 |
-| ACC                | 86.4 \pm 6.9                   | 87.9 \pm 5.8  |
-
-
-
-# | metric             | VGG conv-{1_2,2_2,3_3,4_3,5_3} |  train            |
-# |--------------------+--------------------------------+-------------------|
-# | IU_{matrix}        | 0.4308 \pm 0.1429              | 0.6289 \pm 0.0219 |
-# | IU_{network}       | 0.6562 \pm 0.1973              | 0.8410 \pm 0.0217 |
-# | IU_{spheroidite}   | 0.8604 \pm 0.0791              | 0.8968 \pm 0.0413 |
-# | IU_{widmanstatten} | 0.3356 \pm 0.1375              | 0.3909 \pm 0.1182 |
-# | IU_{avg}           | 0.5707 \pm 0.1086              | 0.6894 \pm 0.0311 |
-# | ACC                | 0.8510 \pm 0.0733              | 0.9011 \pm 0.0313 |
-
-
-# | model                          | network | denuded zone | matrix | widmanstätten | global AC |
-# |--------------------------------+---------+--------------+--------+---------------+-----------|
-# | VGG conv-{1_2,2_2,3_3,4_3,5_3} |       0 | 0            | 0      | 0             | 0         |
-
-
-
-
+#+NAME: tab:particlesegmentationperf
+| model                            | matrix         | spheroidite     | IU_{avg}       | AC             | PSD KS |
+|----------------------------------+----------------+-----------------+----------------+----------------+--------|
+| otsu                             | 86.2 $\pm$ 7.2 | 53.7 $\pm$ 12.1 | 69.9 $\pm$ 9.3 | 88.1 $\pm$ 6.1 | -      |
+| thresholded blur\cite{hecht2017} | -              | -               | -              | -              | -      |
+|----------------------------------+----------------+-----------------+----------------+----------------+--------|
+| {1_2,2_2,3_3,4_3,5_3}            | 91.7 $\pm$ 2.7 | 56.8 $\pm$ 13.8 | 74.2 $\pm$ 7.9 | 92.5 $\pm$ 2.5 | 0.21   |
+| {1_2,2_2,3_3,4_3,5_3,7}          | 91.5 $\pm$ 3.0 | 56.7 $\pm$ 12.2 | 74.1 $\pm$ 7.2 | 92.3 $\pm$ 2.8 | 0.125  |
 
 
 ** Automated measurement of abstract microstructure features
 # note: change this to input, class predictions, masked particle predictions.
 # use the same micrographs as in the abstract microstructure segmentation task.
 \begin{figure}[!htbp]
-  \includegraphics[width=\textwidth]{fused_predictions_00}
+  \includegraphics[width=\textwidth]{combined_model_run01}
   \caption{Independent test set predictions for spheroidite segmentation results in micrographs with multiple microconstituents.}
   \label{fig:fused}
 \end{figure}
@@ -174,7 +156,7 @@ TODO: add a figure showing measured particle size distributions from Figure \ref
 
 
 \begin{figure}[!htbp]
-  \includegraphics[width=\textwidth]{denuded_zone}
+  \includegraphics[width=\textwidth]{denuded_zone_run05}
   \caption{Denuded zone width distribution measured from semantic microconstituent prediction map. The network interface is shown in blue and the particle matrix interface is shown in yellow.}
   \label{fig:denuded_zone}
 \end{figure}
@@ -186,7 +168,8 @@ Compare with Matt's manual annotations where appropriate?
 
 \section*{Acknowledgements}
 We gratefully acknowledge funding for this work through National Science Foundation grants DMR-1307138 and DMR-1501830, and through the John and Claire Bertucci Foundation.
-The UHCS micrographs were graciously provided by Matthew Hecht, Yoosuf Picard, and Bryan Webler (CMU) cite:uhcshb.
+The UHCS micrographs were graciously provided by Matthew Hecht, Yoosuf Picard, and Bryan Webler (CMU) cite:uhcsdb.
+Semantic microstructure annotations were performed by B.D.
 The spheroidite annotations were graciously provided by Matthew Hecht and Txai Sibley.
 The open source software projects Scikit-Learn cite:sklearn and keras cite:keras were essential to this work.
 
