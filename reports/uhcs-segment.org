@@ -29,26 +29,26 @@ We also demonstrate how these data-driven microstructure segmentation models can
 #+END_ABSTRACT
 
 * Introduction
-** Contemporary interpretation of microstructures :ignore:
+*** Contemporary interpretation of microstructures 		     :ignore:
 - Careful measurements of volume fractions, size distributions, and shape descriptors.
 - Contemporary segmentation methods in application in materials science are typically specialized and require expert tuning for application to a particular microstructure system.
 - often rely on sometimes-brittle image processing pipeline
 - limited level of abstraction: generally approach the problem by assuming similar microstructure features have similar image intensities.
 
-** Related work: applications of deep learning in microstructure :ignore:
+*** Related work: applications of deep learning in microstructure    :ignore:
 Since 2012, deep learning methods cite:LeCun2015 have dominated many computer vision applications.[fn:2]
 Applications of contemporary computer vision techniques for flexible and generic microstructure classification cite:decost2015,chowdhury2016.
 Studies of relationships between processing and structure with convolutional neural networks (CNNs) cite:lubbers2016,decost2017uhcs.
 Segmentation of steels into constituent phases with neural nets cite:azimi2017.
 
-** Outline of work 						     :ignore:
+*** Approach: pixel prediction CNN 				     :ignore:
 Apply a pixelwise CNN architecture cite:bansal2017 to obtain microstructure segmentations at a high level of abstraction.
 Our model microstructure system is a subset of the openly available Utrahigh Carbon Steel (UHCS) microstructure dataset cite:uhcsdb,hecht2016,hecht2017.
 We show that CNNs can distinguish between the four principal microconstituents in this heat-treated UHCS: proeutectoid cementite network, fields of spheroidite particles, the ferritic matrix in the particle-free denuded zone near the network, and {{{ws}}} lath.
 We also train a network to segment individual spheroidite particles, and briefly explore automated microstructure metrology techniques enabled by this kind of powerful segmentation model.
 We plan publish our annotations for the network micrographs, as well as the micrographs and annotations used for the particle segmentation task.
 
-** Summary of contributions :ignore:
+*** Summary of contributions 					     :ignore:
 Our primary contributions are:
 - Establishing two novel microstructure segmentation benchmark datasets
 - Connecting microstructure science to the deep semantic segmentation literature
@@ -63,13 +63,16 @@ Recently a variety of CNN architectures have been developed for dense pixel-leve
 SegNet cite:badrinarayanan2017,kendall15_bayes_segnet, FCN cite:long2015, fully-convolutional DenseNets cite:jegou16:_one_hundr_layer_tiram, and PixelNet cite:bansal2017.
 
 *** PixelNet architecture
+**** architecture description :ignore:
 We use a PixelNet cite:bansal2017 architecture, illustrated schematically in Figure ref:fig:architecture.
 Motivation: training from scratch on a small dataset.
 General description of training with sparse upsampling.[fn:1]
 General description of inference with dense upsampling.
 
+**** layer configuration 					     :ignore:
 - BatchNorm cite:ioffe2015 - Conv - ReLU cite:nair2010 layers
 - Specify layer configurations, including skip connections
+- two versions: with and without bottleneck layers
 
 \begin{figure}[!htbp]
   \frame{
@@ -78,7 +81,7 @@ General description of inference with dense upsampling.
   \label{fig:architecture}
 \end{figure}
 
-*** Training
+*** Training details
 - Initialization
 - Pixel sampling strategies (random vs balanced? whatever we stick with...)
 - Adam cite:kingma14_adam (or SGD+Nesterov with cyclic learning rate if it works?) (specify learning rate, etc).
@@ -87,6 +90,7 @@ General description of inference with dense upsampling.
 - Specify loss function
 - Label smoothing (if any in the final version)
 - Document data augmentation (rotation with mirror padding/boundary conditions, flips, and scaling for now)
+- run for 2000 gradient updates
 
 ** Dataset
 *** Semi-automated particle annotation :ignore:
@@ -99,6 +103,12 @@ The final particle segmentations are verified and retouched manually where the c
 We manually labeled a subset of the UHCS dataset cite:uhcsdb,uhcsdata using the open source medical image annotation toolkit MITK cite:mitk.
 
 ** Performance evaluation
+*** Cross validation :ignore:
+Because our set of annotated images is small (24 annotated micrographs total), we use cross-validation to estimate the generalization performance of the PixelNet architecture on our two microstructure segmentation tasks.
+We use a 6-fold cross-validation scheme cite:Hastie_2001: each dataset is split into six validation sets of four micrographs each, and six PixelNet models are trained on each of the complementary training sets.
+The quantitative performance metrics reported in Tables ref:tab:semanticsegmentationperf and ref:tab:particlesegmentationperf are averages over each validation image in the 6 validation sets; uncertainties are sample standard errors computed over all 24 validation images.
+
+*** IU and AC 							     :ignore:
 We report the standard evaluation metrics for semantic segmentation tasks: pixel accuracy (AC) and region intersection over union (IU), both for individual classes and averaged over all four microstructure classes.
 For each of these metrics, a higher score indicates better performance.
 The intersection over union metric $IU(c)$ for class $c$ is the ratio of correctly predicted pixels of class $c$ to the union of pixels with either ground truth or predicted class $c$:
@@ -109,27 +119,25 @@ IU(c) = \frac{\sum_i (o_i == c \land y_i == c)}{\sum_i (o_i == c \lor y_i == c) 
 
 where $\land$ denotes logical conjunction (logical and) and $\lor$ denotes inclusive disjunction (logical or), $o_i$ are the predictions for each pixel $i$, and $y_i$ are the ground truth labels for each pixel.
 
+*** KS test for PSD 						     :ignore:
 For the spheroidite particle segmentation task, we also report performance metrics comparing particle size distributions obtained from the model predictions with those obtained from the ground truth annotations (as reported in cite:hecht2017.
 The PSD KS metric indicates failure rates for  the two-sample Kolmogorov-Smirnov test to each pair of model and ground truth PSDs (lower is better).
 
 ** Computing denuded zone widths \label{sec:dzw}
-
+*** overview :ignore:
 Input: microconstituent prediction map.
 We quantify the width of the denuded zone by computing for each matrix-particle interface pixel the minimum distance to the network phase.
 In practice we compute a map of euclidean distance to the network phase, and select the measurements at the denuded zone interface.
 
+*** computational details 					     :ignore:
 To obtain the denuded zone interface, we apply several image processing techniques to clean up the microconstituent prediction map, so that only the matrix predictions associated with the diffusion-limited denuded zone adjacent to the proeutectoid cementite network remain.
 A morphological filling operation removes any matrix pixels within the network.
 Matrix regions that are not connected to the network by applying a morphological closing to matrix phase and removing matrix segments that do not intersect the network phase.
 Finally, we remove any matrix predictions that are closer to a widmanstatten region than to a network region, and subsequently remove the widmanstatten regions.
 The region boundaries on the cleaned up label image (shown in Figure \ref{fig:denuded_zone}) include only the interface of the proeutectoid cementite network phase (indicated in blue) and the diffuse interface of the denuded zone (indicated in yellow).
 
-
 * Results and Discussion
-# TODO: add validation predictions for the entire dataset as supplemental figures?
 ** Semantic microconstituent segmentation
-# Big question: how many micrographs do I need to annotate to get good perf?
-# Should we try to answer this question in the current study, or down the road a bit?
 *** Qualitative results :ignore:
 Figure ref:fig:microconstituents shows microconstituent annotations and predictions for the four validation set micrographs in one cross-validation iteration.
 The predictions are quite reasonable even when there are nontrivial differences in features such as particle size and appearance.
@@ -154,17 +162,15 @@ The less prevalent microconstituents (matrix and {{{ws}}}) are not as well captu
 #+NAME: tab:semanticsegmentationperf
 | metric        | {1_2,2_2,3_3,4_3,5_3} | {1_2,2_2,3_3,4_3,5_3,7} |
 |---------------+-----------------------+-------------------------|
-| matrix        | 64.7 $\pm$ 12.1       | 63.7 $\pm$ 10.2         |
-| network       | 86.0 $\pm$ 15.6       | 85.5 $\pm$ 17.8         |
-| spheroidite   | 90.5 $\pm$ 7.4        | 89.8 $\pm$ 7.1          |
-| widmanstätten | 40.0 $\pm$ 18.6       | 31.1 $\pm$ 14.9         |
-| IU_{avg}      | 69.8 $\pm$ 11.2       | 68.8 $\pm$ 10.9         |
-| AC            | 91.6 $\pm$ 6.6        | 90.9 $\pm$ 6.6          |
-
+| matrix        | 64.8 $\pm$ 2.3        | 63.7 $\pm$ 2.0          |
+| network       | 86.3 $\pm$ 2.7        | 85.8 $\pm$ 3.5          |
+| spheroidite   | 90.5 $\pm$ 1.7        | 89.8 $\pm$ 1.9          |
+| widmanstätten | 40.0 $\pm$ 4.3        | 31.2 $\pm$ 3.7          |
+| IU_{avg}      | 69.8 $\pm$ 2.2        | 68.8 $\pm$ 2.5          |
+| AC            | 91.6 $\pm$ 1.4        | 90.9 $\pm$ 1.7          |
 
 ** Spheroidite particle segmentation
-*** Qualitative results :ignore:
-# TODO: consider watershedding particle prediction maps before comparing PSD with annotations.
+*** Qualitative results  :ignore:
 Figure ref:fig:spheroiditeresults shows some validation results for the individual particle segmentation task, with numerical performance reported in Table ref:tab:particlesegmentationperf.
 The particle predictions are overlaid in red on top of the input images (top).
 The second row shows the empirical particle size distributions for both particle predictions and annotations, as well as the results of the two-sample Kolmogorov-Smirnov hypothesis for distribution equivalence.
@@ -193,9 +199,8 @@ This suggests that a sparsity constraint such as L_1 regularization on the class
 | otsu                             | 86.2 $\pm$ 7.2 | 53.7 $\pm$ 12.1 | 69.9 $\pm$ 9.3 | 88.1 $\pm$ 6.1 | -      |
 | thresholded blur\cite{hecht2017} | -              | -               | -              | -              | -      |
 |----------------------------------+----------------+-----------------+----------------+----------------+--------|
-| {1_2,2_2,3_3,4_3,5_3}            | 91.7 $\pm$ 2.7 | 56.8 $\pm$ 13.8 | 74.2 $\pm$ 7.9 | 92.5 $\pm$ 2.5 | 0.21   |
-| {1_2,2_2,3_3,4_3,5_3,7}          | 91.5 $\pm$ 3.0 | 56.7 $\pm$ 12.2 | 74.1 $\pm$ 7.2 | 92.3 $\pm$ 2.8 | 0.125  |
-
+| {1_2,2_2,3_3,4_3,5_3}            | 91.7 $\pm$ 0.5 | 56.8 $\pm$ 1.5  | 74.3 $\pm$ 0.8 | 92.6 $\pm$ 0.4 | 0.208  |
+| {1_2,2_2,3_3,4_3,5_3,7}          | 91.8 $\pm$ 0.6 | 56.9 $\pm$ 2.3  | 74.4 $\pm$ 1.3 | 92.6 $\pm$ 0.6 | 0.166  |
 
 ** Quantitative analysis of abstract microstructure features
 *** Introduction/motivation :ignore:
@@ -237,8 +242,8 @@ The denuded zone width distributions are calculated by aggregating the minimum d
 - Could reduce the barrier to microstructure-based material qualification by making it easier/cheaper to obtain statistical data on high-level microstructure features known to mediate critical engineering properties of materials (e.g. particle size distributions; denuded zone widths in studies of UHCS fracture toughness and particle coarsening kinetics).
 - This general approach could also enable new high-throughput microstructure quantification techniques for accelerated alloy design and processing optimization.
 
-* Acknowledgements :ignore:
-\section*{Acknowledgements}
+* Acknowledgments 						     :ignore:
+\section*{Acknowledgments}
 We gratefully acknowledge funding for this work through National Science Foundation grants DMR-1307138 and DMR-1507830, and through the John and Claire Bertucci Foundation.
 The UHCS micrographs were graciously provided by Matthew Hecht, Yoosuf Picard, and Bryan Webler (CMU) cite:uhcsdb.
 Semantic microstructure annotations were performed by B.D.
@@ -254,3 +259,11 @@ The open source software projects Scikit-Learn cite:sklearn and keras cite:keras
 [fn:2] See cite:Goodfellow-et-al-2016 for a comprehensive introduction to deep learning methods, including architectural and training choices.
 
 
+
+* Questions :noexport:
+** TODO switch to standard errors for crossval results
+http://www.stat.cmu.edu/~ryantibs/datamining/lectures/19-val2.pdf
+** TODO consider watershedding particle prediction maps before comparing PSD with annotations.
+** TODO add validation predictions for the entire dataset as supplemental figures?
+** TODO Big question: how many micrographs do I need to annotate to get good perf?
+Should we try to answer this question in the current study, or down the road a bit?
