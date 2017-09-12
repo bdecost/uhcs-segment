@@ -82,7 +82,7 @@ def blend_images(original, colormask, alpha=0.8):
 
     return color.hsv2rgb(i_hsv)
 
-def get_label_image(mitkfile):
+def get_label_image(sourcefile):
     micrograph_id = int( re.search(r'\d+', sourcefile).group() )
     f = read_mitk_fields(sourcefile)
     micrograph = f['micrograph{}'.format(micrograph_id)].T
