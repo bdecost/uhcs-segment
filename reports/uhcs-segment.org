@@ -25,54 +25,69 @@
 #+BEGIN_ABSTRACT
 We apply a deep convolutional neural network segmentation model to enable novel automated microstructure segmentation applications for complex microstructures typically evaluated manually and subjectively.
 We explore two microstructure segmentation tasks in an openly-available ultrahigh carbon steel microstructure dataset cite:uhcsdb: segmenting cementite particles in the spheroidized matrix, and segmenting larger fields of view featuring grain boundary carbide, spheroidized particle matrix, particle-free grain boundary denuded zone, Widmanstätten cementite.
-We also demonstrate how these data-driven microstructure segmentation models can be combined to obtain empirical cementite particle size distributions from more complex micrographs containing multiple microconstituents.
+We also demonstrate how these data-driven microstructure segmentation models can be combined to obtain empirical cementite particle size and denuded zone width distributions from more complex micrographs containing multiple microconstituents.
 #+END_ABSTRACT
 
 * Introduction
 *** Contemporary interpretation of microstructures 		     :ignore:
-- Careful measurements of volume fractions, size distributions, and shape descriptors.
-- Contemporary segmentation methods in application in materials science are typically specialized and require expert tuning for application to a particular microstructure system.
-- often rely on sometimes-brittle image processing pipeline
-- limited level of abstraction: generally approach the problem by assuming similar microstructure features have similar image intensities.
+Quantitative microstructure analysis is central to many branches of materials engineering and design.
+Traditionally this entails careful measurements of volume fractions, size distributions, and shape descriptors for familiar microstructural features such as grains and second-phase particles.
+These quantities are connected to theoretical and/or empirical models for materials properties, e.g. grain boundary cite:hall1951 or particle cite:zener strengthening mechanisms.
+Contemporary segmentation methods supporting these analyses rely on specialized and sometimes brittle image processing pipelines that often require expert tuning for application to a particular microstructure system.
+Furthermore, the microstructures accessible to quantitative analysis are limited in abstraction by the use of segmentation algorithms that rely on low-level image features (intensity and connectivity constraints).
+In this work we apply deep learning methods for image segmentation to complex microstructure data, with the goal of extending the reach of quantitative analysis to microstructure systems that are currently evaluated subjectively or through laborious manual annotation.
 
 *** Related work: applications of deep learning in microstructure    :ignore:
-Since 2012, deep learning methods cite:LeCun2015 have dominated many computer vision applications.[fn:2]
-Applications of contemporary computer vision techniques for flexible and generic microstructure classification cite:decost2015,chowdhury2016.
-Studies of relationships between processing and structure with convolutional neural networks (CNNs) cite:lubbers2016,decost2017uhcs.
-Segmentation of steels into constituent phases with neural nets cite:azimi2017.
+Since 2012, deep learning methods cite:LeCun2015 have dominated many computer vision applications[fn:2], including object recognition and detection, scene summarization, semantic segmentation, and depth map prediction.
+The success of deep learning is often attributed to the ability of convolutional neural networks (CNNs) to learn to effectively represent the hierarchical structure of visual data, composing low-level image features (edges, color gradients) into higher level features corresponding to abstract qualities of the image subject (e.g. object parts).
+Recently materials scientists have begun exploring a limited set of applications of contemporary computer vision techniques for flexible and generic microstructure representation.
+cite:decost2015 and cite:chowdhury2016 explore these techniques in the context of microstructure classification.
+cite:lubbers16_infer_low_dimen_micros_repres and cite:decost2017uhcs use pretrained CNN representations to study relationships between processing conditions and microstructure via dimensionality-reduction and visualization techniques.
+Concurrent to this work, cite:azimi2017 apply a CNN segmentation model to identify constituent phases in steel microstructures.
 
 *** Approach: pixel prediction CNN 				     :ignore:
-Apply a pixelwise CNN architecture cite:bansal2017 to obtain microstructure segmentations at a high level of abstraction.
-Our model microstructure system is a subset of the openly available Utrahigh Carbon Steel (UHCS) microstructure dataset cite:uhcsdb,hecht2016,hecht2017.
-We show that CNNs can distinguish between the four principal microconstituents in this heat-treated UHCS: proeutectoid cementite network, fields of spheroidite particles, the ferritic matrix in the particle-free denuded zone near the network, and {{{ws}}} lath.
+We apply a pixelwise CNN cite:bansal2017 to obtain microstructure segmentations at a high level of abstraction.
+We evaluate the feasibility of this approach on a subset of the openly available Utrahigh Carbon Steel (UHCS) microstructure dataset cite:uhcsdb,hecht2016,hecht2017.
+CNNs can distinguish between the four principal microconstituents in this heat-treated UHCS: proeutectoid cementite network, fields of spheroidite particles, the ferritic matrix in the particle-free denuded zone near the network, and {{{ws}}} lath.
 We also train a network to segment individual spheroidite particles, and briefly explore automated microstructure metrology techniques enabled by this kind of powerful segmentation model.
-We plan publish our annotations for the network micrographs, as well as the micrographs and annotations used for the particle segmentation task.
+Our training data and annotations for both microstructure segmentation tasks will be published in conjunction with this manuscript.
 
 *** Summary of contributions 					     :ignore:
 Our primary contributions are:
 - Establishing two novel microstructure segmentation benchmark datasets
 - Connecting microstructure science to the deep semantic segmentation literature
 - Exploring novel means of expanding contemporary quantitative microstructure measurement techniques to more complex structures
-- Could reduce the barrier to microstructure-based material qualification by making it easier/cheaper to obtain statistical data on high-level microstructure features known to mediate critical engineering properties of materials (e.g. particle size distributions; denuded zone widths in studies of UHCS fracture toughness and particle coarsening kinetics).
-- This general approach could also enable new high-throughput microstructure quantification techniques for accelerated alloy design and processing optimization.
+
+For microstructure scientists, CNN-based microstructure segmentation tools offer a trade-off between initial annotation and training effort to gain more flexible and scalable automated analytics over longer-term or larger-scale research and characterization efforts.
+This trade-off is particularly attractive for its potential to enable microstructure-based material qualification by making it easier/cheaper to obtain statistical data on high-level microstructure features known to mediate critical engineering properties of materials (e.g. particle size distributions; denuded zone widths in studies of UHCS fracture toughness and particle coarsening kinetics).
+In industrial settings where reliance on semi-automated segmentation techniques is common, the barrier to entry is even lower because the training data has already been collected.
+CNN-based microstructure segmentation tools also offer a path forward to high-throughput microstructure quantification techniques for accelerated alloy design and processing optimization, where acquisition and analysis of high-quality microstructure data is often a limiting factor.
 
 * Methods
 ** Segmentation model
 *** Background: pixel prediction tasks :ignore:
-Recently a variety of CNN architectures have been developed for dense pixel-level tasks cite:wang17_under_convol_seman_segmen, such as semantic segmentation cite:badrinarayanan2017, edge detection, depth map, and surface normal prediction cite:bansal2016marr.
-SegNet cite:badrinarayanan2017,kendall15_bayes_segnet, FCN cite:long2015, fully-convolutional DenseNets cite:jegou16:_one_hundr_layer_tiram, and PixelNet cite:bansal2017.
+Recently a variety of deep CNN architectures have been developed for dense pixel-level tasks cite:wang17_under_convol_seman_segmen, such as semantic segmentation cite:badrinarayanan2017, edge detection, depth map, and surface normal prediction cite:bansal2016marr.
+Conceptually, a modern deep CNN computes a highly nonlinear function through a layerwise composition of convolution, activation, and pooling (i.e. downsampling) functions, the parameters of which are learned from large annotated datasets by some variant of stochastic gradient descent cite:LeCun2015,Goodfellow-et-al-2016.
+While image classification CNNs reduce an input image to a single latent feature vector, CNNs designed for pixel-level regression and classification employ some means of upsampling the latent representations (commonly: the feature maps) at multiple stages in the network to the resolution of the input image. 
+This upsampling is typically a fixed bilinear interpolation cite:hariharan2015,bansal2017 or a learned deconvolution operation cite:long2015.
+In the latter class of networks, popular architetures include SegNet cite:badrinarayanan2017,  Bayesian SegNet cite:kendall15_bayes_segnet, U-Net cite:ronneberger2015 with heavy data augmentation, and fully-convolutional DenseNets cite:jegou16:_one_hundr_layer_tiram.
+In particular, U-Net cite:ronneberger2015 was designed for application to medical image segmentation tasks with small dataset sizes, relying on strong data augmentation to achieve good performance.
 
 *** PixelNet architecture
 **** architecture description :ignore:
-We use a PixelNet cite:bansal2017 architecture, illustrated schematically in Figure ref:fig:architecture.
-Motivation: training from scratch on a small dataset.
-General description of training with sparse upsampling.[fn:1]
-General description of inference with dense upsampling.
+We use a PixelNet cite:bansal2017 architecture which uses a fixed bilinear upsampling, illustrated schematically in Figure ref:fig:architecture.
+This architecture applies bilinear interpolation to intermediate feature maps to form hypercolumn features $h(x) = [conv_1(x),\; conv_2(x),\; \ldots \; conv_5(x)]$, with a non-linear predictor implemented as a multi-layer perceptron (MLP, i.e. a traditional artificial neural network (ANN)).
+Instead of computing dense high-dimensional feature maps at the input resolution as in other popular pixel prediction networks, at training time PixelNet performs a sparse upsampling to efficiently obtain hypercolumn features only for a small sample of the input pixels.[fn:1]
+This is attractive for quickly training segmentation networks from scratch with small training sets because it reduces the memory footprint during training and makes training a non-linear predictor with high-dimensional latent representations feasible cite:bansal2017.
+
 
 **** layer configuration 					     :ignore:
-- BatchNorm cite:ioffe2015 - Conv - ReLU cite:nair2010 layers
-- Specify layer configurations, including skip connections
-- two versions: with and without bottleneck layers
+The feature extraction portion of our PixelNet variant uses a thinned-down version of the VGG-16 architecture cite:simonyan2014 used by the original PixelNet cite:bansal2017; this architecture consists of 13 convolution layers and two fully-connected layers {1_1, 1_2, 2_1, 2_2, 3_1, 3_2, 3_3, 4_1, 4_2, 4_3, 5_1, 5_2, 5_3, 6, 7}.
+The width (number of channels) of each layer is reduced by a factor of 4, so that the first convolution layers (conv_1) have 16 channels, and the deepest convolution layers (conv_5) have 128 channels.
+The size of both MLP layers is 1024.
+Following the original PixelNet implementation, our hypercolumn features consist of the highest convolution feature map within each block of the VGG architecture.
+We investigate two versions of the PixelNet network: with ({1_2,2_2,3_3,4_3,5_3,7}) and without ({1_2,2_2,3_3,4_3,5_3}, shown in Figure ref:fig:architecture) the bottleneck layers.
+After each convolution layer, we apply batch normalization cite:ioffe2015 followed by rectified linear (ReLU) activations cite:nair2010 ($ReLU(y_i) = \max(0, y_i)$).
 
 \begin{figure}[!htbp]
   \frame{
@@ -82,31 +97,30 @@ General description of inference with dense upsampling.
 \end{figure}
 
 *** Training details
-- Initialization
-- Pixel sampling strategies (random vs balanced? whatever we stick with...)
-- Adam cite:kingma14_adam (or SGD+Nesterov with cyclic learning rate if it works?) (specify learning rate, etc).
-- Dropout regularization cite:srivastava2014 on the MLP layers
-- weight decay (L2 regularization on convolution filter parameters)
-- Specify loss function
-- Label smoothing (if any in the final version)
-- Document data augmentation (rotation with mirror padding/boundary conditions, flips, and scaling for now)
-- run for 2000 gradient updates
+We train all of our networks from scratch, randomly initializing weights from Gaussian distributions with zero mean and standard deviation $\sigma = \sqrt{2/n_l}$ cite:he2015, where $n_l = k^2c$ and $k$ is the spatial dimension of convolution kernels and $c$ is the dimensionality of the input to layer $l$.
+To prevent overfitting, we use Dropout regularization cite:srivastava2014 with a rate of 50% on the MLP layers and weight decay of 10^{-4} on all layers.
+We use the standard categorical cross-entropy classification loss function with a small amount of label smoothing.
+For each gradient update, we randomly sample a minibatch of 2048 pixels from 4 training images.
+The training input and label images are augmented with random rotations in the range $\mathopen[0,2\pi\mathclose)$, horizontal and vertical mirror symmetry, and scaling in the range $\mathopen[1,2\mathclose]$.
+Rotated versions of the training input and label images are computed with mirror boundary conditions, with bilinear interpolation for the input images and nearest-neighbor interpolation for the (discrete) labels images.
+We train the networks with the Adam optimizer cite:kingma14_adam with the recommended default parameters (including initial learning rate of 10^{-3}) for 2000 gradient updates.
 
 ** Dataset
+The semantic microstructure segmentation dataset consists of 24 manually annotated[fn:3] micrographs from the open UHCS dataset cite:uhcsdb,uhcsdata, and the particle segmentation dataset consists of 27 micrographs collected to support the particle coarsening analysis reported in cite:hecht2017.
+The semantic microstructure segmentation dataset consists of micrographs featuring some of the characteristic features of heat-treated UHCS: the proeutectoid cementite network and the associated denuded zone, and spheroidized and {{{ws}}} cementite.
+
 *** Semi-automated particle annotation :ignore:
 The particle annotations were obtained through a partially-automated edge-based segmentation workflow cite:hecht2017.
-A thresholded blur smooths contrast in the matrix surrounding particles before application of the Canny edge detector.
-The particle outlines are filled in, and spurious edge detections (e.g. deeply etched grain boundaries) are removed by a 2px median filter.
+A thresholded blur smooths contrast in the matrix surrounding particles before application of the Canny edge detector cite:CANNY_1987.
+The particle outlines are filled in, and spurious edges (e.g. at grain boundaries) are removed by a 2px median filter.
 The final particle segmentations are verified and retouched manually where the contrast is insufficient for the Canny detector to identify particle edges.
-
-*** Manual labeling for abstract microconstituent segmentation :ignore:
-We manually labeled a subset of the UHCS dataset cite:uhcsdb,uhcsdata using the open source medical image annotation toolkit MITK cite:mitk.
+Particles intersecting the edge of the image are removed from the annotations to reduce bias in the estimated particle size distributions.
 
 ** Performance evaluation
 *** Cross validation :ignore:
 Because our set of annotated images is small (24 annotated micrographs total), we use cross-validation to estimate the generalization performance of the PixelNet architecture on our two microstructure segmentation tasks.
 We use a 6-fold cross-validation scheme cite:Hastie_2001: each dataset is split into six validation sets of four micrographs each, and six PixelNet models are trained on each of the complementary training sets.
-The quantitative performance metrics reported in Tables ref:tab:semanticsegmentationperf and ref:tab:particlesegmentationperf are averages over each validation image in the 6 validation sets; uncertainties are sample standard errors computed over all 24 validation images.
+The quantitative performance metrics reported in Tables ref:tab:semanticsegmentationperf and ref:tab:particlesegmentationperf are averages over each validation image in the 6 validation sets; uncertainties are standard errors computed over the six validation images cite:Hastie_2001.
 
 *** IU and AC 							     :ignore:
 We report the standard evaluation metrics for semantic segmentation tasks: pixel accuracy (AC) and region intersection over union (IU), both for individual classes and averaged over all four microstructure classes.
@@ -120,17 +134,17 @@ IU(c) = \frac{\sum_i (o_i == c \land y_i == c)}{\sum_i (o_i == c \lor y_i == c) 
 where $\land$ denotes logical conjunction (logical and) and $\lor$ denotes inclusive disjunction (logical or), $o_i$ are the predictions for each pixel $i$, and $y_i$ are the ground truth labels for each pixel.
 
 *** KS test for PSD 						     :ignore:
-For the spheroidite particle segmentation task, we also report performance metrics comparing particle size distributions obtained from the model predictions with those obtained from the ground truth annotations (as reported in cite:hecht2017.
-The PSD KS metric indicates failure rates for  the two-sample Kolmogorov-Smirnov test to each pair of model and ground truth PSDs (lower is better).
+For the spheroidite particle segmentation task, we also report performance metrics comparing particle size distributions obtained from the model predictions with those obtained from the ground truth annotations (as reported in cite:hecht2017).
+We use the two-sample Kolmogorov-Smirnov (KS) test cite:Massey_1951 to compare each pair of predicted and ground truth PSDs.
+The KS scores (lower is better) reported in Table ref:tab:particlesegmentationperf are the fraction of micrographs where the KS test indicates that the predicted particle size distribution is not consistent with the ground truth particle size distribution (i.e. the fraction of micrographs where the null hypothesis is rejected at the 95% confidence level).
 
 ** Computing denuded zone widths \label{sec:dzw}
 *** overview :ignore:
-Input: microconstituent prediction map.
-We quantify the width of the denuded zone by computing for each matrix-particle interface pixel the minimum distance to the network phase.
+Given a microconstituent prediction map, we quantify the width of the denuded zone by computing the minimum distance to the network phase for each pixel on the matrix-particle interface.
 In practice we compute a map of euclidean distance to the network phase, and select the measurements at the denuded zone interface.
 
 *** computational details 					     :ignore:
-To obtain the denuded zone interface, we apply several image processing techniques to clean up the microconstituent prediction map, so that only the matrix predictions associated with the diffusion-limited denuded zone adjacent to the proeutectoid cementite network remain.
+To obtain the denuded zone interface, we apply a series of image processing techniques to clean up the microconstituent prediction map, so that only the matrix predictions associated with the diffusion-limited denuded zone adjacent to the proeutectoid cementite network remain.
 A morphological filling operation removes any matrix pixels within the network.
 Matrix regions that are not connected to the network by applying a morphological closing to matrix phase and removing matrix segments that do not intersect the network phase.
 Finally, we remove any matrix predictions that are closer to a widmanstatten region than to a network region, and subsequently remove the widmanstatten regions.
@@ -139,11 +153,12 @@ The region boundaries on the cleaned up label image (shown in Figure \ref{fig:de
 * Results and Discussion
 ** Semantic microconstituent segmentation
 *** Qualitative results :ignore:
-Figure ref:fig:microconstituents shows microconstituent annotations and predictions for the four validation set micrographs in one cross-validation iteration.
-The predictions are quite reasonable even when there are nontrivial differences in features such as particle size and appearance.
-Intensity variations and scratches in the input images have little impact on the predictive capability of the model.
+Figure ref:fig:microconstituentresults shows microconstituent annotations and predictions for the four validation set micrographs in one cross-validation iteration.
+The predictions are reasonable even when there are nontrivial differences in features such as particle size and appearance.
+Intensity variations and polishing damage evident in the input images have little impact on the predictive capability of the model.
 The model does a good job respecting the edges of the network phase, and produces spheroidite-matrix boundaries that have little noise and similar contouring to the annotations.
-The {{{ws}}} predictions show the highest amount of noise, and are often misclassified as spheroidite, particularly where the {{{ws}}} lath are very fine or are beginning to break up.
+The {{{ws}}} predictions show the highest amount of noise; {{{ws}}} is often misclassified as spheroidite, particularly where the {{{ws}}} lath are fine or are beginning to break up.[fn:4]
+In addition to the low areal fraction of {{{ws}}} cementite, one potential contributing factor for this failure mode is labeling bias where the microstructure is ambiguous even to the human expert.
 
 \begin{figure}[!htbp]
   \includegraphics[width=\textwidth]{validation_predictions_uhcs_03}
@@ -152,13 +167,13 @@ The {{{ws}}} predictions show the highest amount of noise, and are often misclas
 \end{figure}
 
 *** Quantitative results :ignore:
-Table ref:tab:semanticsegmentationperf shows the semantic segmentation performance averaged over all validation images in the 6-fold cross-validation.
-The pixelnet models obtain roughly 90% accuracy in reproducing pixel-level annotations.
-For both architectures, the models are consistently good at identifying spheroidite regions.
-The network predictions are similarly good, though the variance is much higher.
+Table ref:tab:semanticsegmentationperf shows the average validation set performance with standard errors for the semantic microstructure segmentation task.
+The pixelnet models obtain roughly 90% overall accuracy (AC) in reproducing the pixel-level annotations.
+For both architectures, the models are consistently good at identifying spheroidite and network regions.
 The less prevalent microconstituents (matrix and {{{ws}}}) are not as well captured, and show higher variation between images.
+Including the bottleneck feature map (conv_7) does not significantly affect performance, except to reduce the IU score for the {{{ws}}} microconstituent.
 
-#+CAPTION: Semantic segmentation performance averaged over validation images. Uncertainties are sample standard deviations calculated across validation folds.
+#+CAPTION: Semantic segmentation performance averaged over validation images. Uncertainties are standard errors calculated across validation folds.
 #+NAME: tab:semanticsegmentationperf
 | metric        | {1_2,2_2,3_3,4_3,5_3} | {1_2,2_2,3_3,4_3,5_3,7} |
 |---------------+-----------------------+-------------------------|
@@ -172,25 +187,17 @@ The less prevalent microconstituents (matrix and {{{ws}}}) are not as well captu
 ** Spheroidite particle segmentation
 *** Qualitative results  :ignore:
 Figure ref:fig:spheroiditeresults shows some validation results for the individual particle segmentation task, with numerical performance reported in Table ref:tab:particlesegmentationperf.
-The particle predictions are overlaid in red on top of the input images (top).
-The second row shows the empirical particle size distributions for both particle predictions and annotations, as well as the results of the two-sample Kolmogorov-Smirnov hypothesis for distribution equivalence.
+Particle predictions are overlaid in red on the input micrographs (top).
+The second row shows the empirical particle size distributions for both particle predictions and annotations, as well as the results of the two-sample Kolmogorov-Smirnov hypothesis test for distribution equivalence.
 Predictions for larger particles relative to the image frame (Figures ref:fig:spheroiditeresults b and c) are consistently good, even where contrast gradients across particles and non-trivial background structure challenge thresholding and edge-based segmentation methods.
 The primary failure mode of the particle segmentation model is failure to detect very small particles, particularly in Figure ref:fig:spheroiditeresults a.
+These particles are typically one to five pixels in size, suggesting that higher- or multi-resolution inputs are necessary for general microstructure characterization systems.
 Additionally, small segments of {{{ws}}} are spuriously labeled by the neural network as particles.
 
-*** model misses small particles --> low KS score :ignore:
-We think the challenge with small particles explains the discrepancies between empirical particle size distributions that contribute to the low KS score averaged over validation images.
-For the two validation micrographs in Figure ref:fig:spheroiditeresults containing fine particles, the particle size histograms and prediction maps show that the model often entirely misses particles with radii smaller than 5px.
-Addition of the conv_7 bottleneck layer reduces the average KS score, potentially by making it harder for the model to identify small particles because of the additional (irrelevant) global information.
-This suggests that a sparsity constraint such as L_1 regularization on the classification layers could help the PixelNet model select an appropriate scale for different tasks.
-
-\begin{figure}[!htbp]
-  \includegraphics[width=\textwidth]{psd_run04}
-  \caption{Independent test set predictions for the spheroidite particle segmentation task.}
-  \label{fig:spheroiditeresults}
-\end{figure}
-
 *** Quantitative results :ignore:
+The PixelNet model performs slightly better than Otsu's thresholding method cite:otsu1979 on all metrics.
+One source of bias in these performance measurements are missing particles in the annotations, either from the removal of particles intersecting the image border, or from failure of the semi-automated annotation method itself.
+An additional source of bias stems from the application of the watershed algorithm cite:vincent1991 to split conjoined particles in the annotations; watershed segmentation is not presently applied to the particle predictions.
 
 #+CAPTION: Segmentation performance on validation sets
 #+NAME: tab:particlesegmentationperf
@@ -202,18 +209,30 @@ This suggests that a sparsity constraint such as L_1 regularization on the class
 | {1_2,2_2,3_3,4_3,5_3}            | 91.7 $\pm$ 0.5 | 56.8 $\pm$ 1.5  | 74.3 $\pm$ 0.8 | 92.6 $\pm$ 0.4 | 0.208  |
 | {1_2,2_2,3_3,4_3,5_3,7}          | 91.8 $\pm$ 0.6 | 56.9 $\pm$ 2.3  | 74.4 $\pm$ 1.3 | 92.6 $\pm$ 0.6 | 0.166  |
 
-** Quantitative analysis of abstract microstructure features
+*** model misses small particles --> low KS score :ignore:
+The KS test suggests we reject the null hypothesis that the predicted and ground truth particle size distributions are equivalent for 5 of the validation micrographs for the no-bottleneck model (4 for the bottleneck model).
+The difficulty in detecting small particles explains the discrepancies between empirical particle size distributions that contribute to the KS score.
+For the two validation micrographs in Figure ref:fig:spheroiditeresults containing fine particles, the particle size histograms and prediction maps show that the model often entirely misses particles with radii smaller than 5px.
+
+\begin{figure}[!htbp]
+  \includegraphics[width=\textwidth]{psd_run04}
+  \caption{Independent test set predictions for the spheroidite particle segmentation task.}
+  \label{fig:spheroiditeresults}
+\end{figure}
+
+** Quantitative analysis of higher-order features
 *** Introduction/motivation :ignore:
 # note: change this to input, class predictions, masked particle predictions.
 # use the same micrographs as in the abstract microstructure segmentation task.
 High-quality automated segmentation techniques for complex microstructure constituents expand the scope of conventional quantitative microstructure analysis by reducing the manual labor required to obtain statistically meaningful amounts of data.
 In our UHCS case study, the CNN segmentation model allows us to collect volume and shape statistics for the proeutectoid carbide network, spheroidite particles, and {{{ws}}} lath directly from SEM micrographs with no manual intervention.
+Additionally, the microconstituent prediction maps enable automated acquisition of interesting microstructural statistics that were previously intractable, such as particle size distributions conditioned on spatial relationships with other microstructure features, or denuded zone widths cite:hecht2017.
 
 *** particle size distributions from complex micrographs :ignore:
-Figure ref:fig:fused shows combined microstructure predictions from both the abstract microstructure model and the particle model, using the same color scheme as Figures ref:fig:microconstituents and ref:fig:spheroiditeresults.
+Figure ref:fig:fused shows combined microstructure predictions from both the abstract microstructure model and the particle model, using the same color scheme as Figures ref:fig:microconstituentresults and ref:fig:spheroiditeresults.
 We run the input image through separately-trained particle segmentation CNN and microconstituent CNN, suppressing particle predictions (red) outside of the predicted spheroidite regions (yellow).
 This approach allows us to collect particle size distributions from micrographs containing other features.
-With an appropriate number of images, we could also compute particle size distributions spatially conditioned on other microstructure features (e.g. distance from the network phase), which could help experimentalists develop insights into operative microstructure evolution mechanisms (particle coarsening vs precipitation).
+With an appropriate number of images, one could also compute particle size distributions spatially conditioned on other microstructure features (e.g. distance from the network phase), which could help lead to insights into operative microstructure evolution mechanisms (particle coarsening vs precipitation).
 
 \begin{figure}[!htbp]
   \includegraphics[width=\textwidth]{combined_model_run01}
@@ -222,9 +241,11 @@ With an appropriate number of images, we could also compute particle size distri
 \end{figure}
 
 *** denuded zone widths :ignore:
-Additionally, automated semantic microstructure segmentation techniques enable quantification of microstructure features that were previously tractable only with tedious manual annotation, such as determination of the denuded zone width in these UHCS microstructures cite:hecht2017.
 Figure ref:fig:denuded_zone shows the predicted network and denuded zone boundaries for four validation images with corresponding computed denuded zone width distributions.
 The denuded zone width distributions are calculated by aggregating the minimum distance to the network interface for each pixel on the denuded zone boundary, as described in detail in Section ref:sec:dzw.
+Generally, these empirical denuded zone widths are reasonable, but some care is required to interpret them.
+Specifically, the denuded zone width distributions in Figures ref:fig:denuded_zone b, c, and d have spuriously high frequencies at small spacings that result from {{{ws}}} lath misclassified as cementite network.
+Figures ref:fig:denuded_zone b and c also exhibit some overprediction of the denuded zone width where the particles are very fine, particularly in the lower left corner of Figure ref:fig:denuded_zone b.
 
 \begin{figure}[!htbp]
   \includegraphics[width=\textwidth]{denuded_zone_run05}
@@ -232,15 +253,15 @@ The denuded zone width distributions are calculated by aggregating the minimum d
   \label{fig:denuded_zone}
 \end{figure}
 
-# TODO: add a figure comparing measured denuded zone widths using ground truth maps and validation set predictions as input.
-# Compare with Matt's manual annotations where appropriate?
+*** is it worth the annotation effort? :ignore:
+The initial investment of micrograph annotation and training a CNN makes sense where a statistical number of samples must be characterized in the context of alloy and processing optimization studies, and in the context of microstructure and process validation or verification.
+
 
 * Conclusions
-- Establishing two novel microstructure segmentation benchmark datasets
-- Connecting microstructure science to the deep semantic segmentation literature
-- Exploring novel means of expanding contemporary quantitative microstructure measurement techniques to more complex structures
-- Could reduce the barrier to microstructure-based material qualification by making it easier/cheaper to obtain statistical data on high-level microstructure features known to mediate critical engineering properties of materials (e.g. particle size distributions; denuded zone widths in studies of UHCS fracture toughness and particle coarsening kinetics).
-- This general approach could also enable new high-throughput microstructure quantification techniques for accelerated alloy design and processing optimization.
+We demonstrate microstructural segmentation and quantitative analysis at a high level of abstraction by applying an off-the-shelf deep neural network architecture for pixel-wise prediction tasks.
+We also present two new open microstructure segmentation benchmark datasets featuring the microstructures in ultra-high carbon steel at different length scales.
+This data-driven approach to microstructure segmentation expands the reach of traditional quantitative microstructure characterization to more complex industrially-relevant microstructure features that have until now been difficult to treat in an automated fashion.
+Combined with emerging automated microscopy capabilities, data-driven microstructure segmentation systems will enable future applications in high-throughput microstructure studies, including investigations of structure/processing relationships, microstructure design and optimization, and microstructure-based material qualification.
 
 * Acknowledgments 						     :ignore:
 \section*{Acknowledgments}
@@ -258,12 +279,27 @@ The open source software projects Scikit-Learn cite:sklearn and keras cite:keras
 
 [fn:2] See cite:Goodfellow-et-al-2016 for a comprehensive introduction to deep learning methods, including architectural and training choices.
 
+[fn:3] We used the medical image annotation system MITK cite:mitk.
+
+[fn:4] Monte Carlo Dropout cite:kendall15_bayes_segnet qualitatively reduces this noise slightly resulting in smoother prediction maps, but has minimal effect on quantitative performance metrics. IU_{{{{ws}}}} typically increases by just a few points.
+
 
 
 * Questions :noexport:
-** TODO switch to standard errors for crossval results
+** DONE switch to standard errors for crossval results
+   CLOSED: [2017-08-18 Fri 14:14]
 http://www.stat.cmu.edu/~ryantibs/datamining/lectures/19-val2.pdf
 ** TODO consider watershedding particle prediction maps before comparing PSD with annotations.
 ** TODO add validation predictions for the entire dataset as supplemental figures?
 ** TODO Big question: how many micrographs do I need to annotate to get good perf?
 Should we try to answer this question in the current study, or down the road a bit?
+** TODO Compare measured denuded zone widths with ground truth maps and validation set predictions as input.
+Compare with Matt's manual annotations where appropriate?
+
+* Notes :noexport:
+** cite:eigen13_under_deep_archit_using_recur_convol_networ
+number of parameters is more important than dimensionality of feature maps: prefer more layers -> deeper networks.
+
+** cite:he2015
+section 2.3, increase width of model rather than depth on small-ish dataset....
+because of diminishing marginal returns to increasing depth...
