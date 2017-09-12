@@ -27,7 +27,8 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 @click.option('--max-epochs', default=10, type=int)
 @click.option('--validation-steps', default=10, type=int)
 @click.option('--run-id', default=0, type=int)
-def train_pixelnet(dataset, batchsize, npix, max_epochs, validation_steps, run_id):
+@click.option('--bottleneck/--no-bottleneck', default=False)
+def train_pixelnet(dataset, batchsize, npix, max_epochs, validation_steps, run_id, bottleneck):
 
     datadir = 'data'
     datafile = os.path.join(datadir, '{}.h5'.format(dataset))
@@ -59,6 +60,9 @@ def train_pixelnet(dataset, batchsize, npix, max_epochs, validation_steps, run_i
     X_train, y_train, names_train = images[train_idx], labels[train_idx], names[train_idx]
     X_val, y_val, names_val = images[val_idx], labels[val_idx], names[val_idx]
 
+    class_weight = np.array( [y_train.size / np.sum(y_train == label) for label in np.unique(y_train)] )
+    print(class_weight)
+
     # write the validation set to the model directory as well...
     with open(os.path.join(model_dir, 'validation_set.txt'), 'w') as vf:
         for name in names_val:
@@ -66,13 +70,14 @@ def train_pixelnet(dataset, batchsize, npix, max_epochs, validation_steps, run_i
 
     N, h, w, _ = images.shape
 
+    steps_per_epoch = 5
     # steps_per_epoch = 100
-    steps_per_epoch = ntrain * h * w / (batchsize*npix)
+    # steps_per_epoch = ntrain * h * w / (batchsize*npix)
     print('steps_per_epoch: {}'.format(steps_per_epoch))
     
-    opt = optimizers.Adam()
-    model = pixelnet_model(nclasses=nclasses)
-    model.compile(loss='categorical_crossentropy', optimizer=opt)
+    opt = optimizers.Adam(lr=1e-3)
+    model = pixelnet_model(nclasses=nclasses, bottleneck=bottleneck)
+    model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['acc'])
 
     csv_logger = CSVLogger(os.path.join(model_dir, 'training-1.log'))
     checkpoint = ModelCheckpoint(
@@ -80,19 +85,25 @@ def train_pixelnet(dataset, batchsize, npix, max_epochs, validation_steps, run_i
             model_dir,
             'weights.{epoch:03d}-{val_loss:.4f}.hdf5'
         ),
-        save_best_only=True,
-        save_weights_only=True
+        save_best_only=False,
+        save_weights_only=True,
+        period=10
     )
     early_stopping = EarlyStopping(monitor='val_loss', patience=3)
+    training_data = random_pixel_samples(
+        X_train, y_train, nclasses=nclasses,
+        replace_samples=False, rotation_range=360, zoom_range=0.5, 
+        horizontal_flip=True, vertical_flip=True, intensity_shift=0.05)
 
     # note: keras/engine/training.py:L132 --> is not None
     f = model.fit_generator(
-        random_pixel_samples(X_train, y_train, nclasses=nclasses),
+        training_data,
         steps_per_epoch,
         epochs=max_epochs,
-        callbacks=[csv_logger, checkpoint, early_stopping],
-        validation_data=random_pixel_samples(X_val, y_val, nclasses=nclasses),
-        validation_steps=validation_steps
+        callbacks=[csv_logger, checkpoint],
+        validation_data=random_pixel_samples(X_val, y_val, nclasses=nclasses, replace_samples=False),
+        validation_steps=validation_steps,
+        class_weight=class_weight
     )
 
     # load best model and evaluate
@@ -103,7 +114,7 @@ def train_pixelnet(dataset, batchsize, npix, max_epochs, validation_steps, run_i
 
     # re-instantiate model because of keras requirement that tensors
     # have the same shape at train and test time
-    model = pixelnet_model(nclasses=nclasses, inference=True)
+    model = pixelnet_model(nclasses=nclasses, inference=True, bottleneck=bottleneck)
     model.load_weights(best_weights)
 
     for X, y in [(X_train, y_train), (X_val, y_val)]:
