@@ -24,7 +24,7 @@ def load_record(f, key, cropbar=None):
     im = micrograph['image'][...]
     l = micrograph['labels'][...]
 
-    im = bytescale(im).astype(np.float32)
+    im = im.astype(np.float32)
 
     if cropbar is not None and cropbar > 0:
         # remove micron bar from bottom of image
