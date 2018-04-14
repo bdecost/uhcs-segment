@@ -16,7 +16,7 @@ sys.path.append(os.getcwd())
 sys.path.append('../pixelnet')
 
 
-from uhcsseg import data, perf, visualization, losses, adamw
+from uhcsseg import data, perf, losses, adamw
 from pixelnet import pixelnet, hypercolumn
 from pixelnet import utils as px_utils
 from pixelnet import vgg
