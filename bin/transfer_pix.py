@@ -9,7 +9,7 @@ import numpy as np
 from keras import optimizers
 from keras import applications
 from keras.utils.np_utils import normalize
-from keras.callbacks import CSVLogger, ModelCheckpoint, EarlyStopping
+from keras import callbacks
 
 import sys
 sys.path.append(os.getcwd())
@@ -87,7 +87,7 @@ def train_pixelnet(dataset, batchsize, npix, max_epochs, validation_steps, run_i
     ]
 
     hc = hypercolumn.build_model(base_model, layernames, batchnorm=True, mode='sparse', relu=False)
-    model = pixelnet.build_model(hc, width=1024, mode='sparse', dropout_rate=0.2)
+    model = pixelnet.build_model(hc, width=1024, mode='sparse', dropout_rate=0.2, l2_reg=0.0)
     
     opt = adamw.Adam(lr=1e-3, weight_decay=1e-4, amsgrad=True)
     for layer in base_model.layers:
@@ -95,8 +95,8 @@ def train_pixelnet(dataset, batchsize, npix, max_epochs, validation_steps, run_i
 
     model.compile(loss=losses.focal_crossentropy_loss(class_weights=class_weights), optimizer=opt, metrics=['acc'])
 
-    csv_logger = CSVLogger(os.path.join(model_dir, 'training-1.log'))
-    checkpoint = ModelCheckpoint(
+    csv_logger = callbacks.CSVLogger(os.path.join(model_dir, 'training-1.log'))
+    checkpoint = callbacks.ModelCheckpoint(
         os.path.join(
             model_dir,
             'weights.{epoch:03d}-{val_loss:.4f}.hdf5'
@@ -125,11 +125,11 @@ def train_pixelnet(dataset, batchsize, npix, max_epochs, validation_steps, run_i
         layer.trainable = True
 
     # fine-tune the whole network
-    opt = adamw.Adam(lr=1e-5, weight_decay=1e-4, amsgrad=True)
+    opt = adamw.Adam(lr=1e-4, weight_decay=1e-4, amsgrad=True)
     model.compile(loss=losses.focal_crossentropy_loss(class_weights=class_weights), optimizer=opt, metrics=['acc'])
 
     csv_logger = callbacks.CSVLogger(os.path.join(model_dir, 'finetune-1.log'))
-    checkpoint = ModelCheckpoint(
+    checkpoint = callbacks.ModelCheckpoint(
         os.path.join(
             model_dir,
             'weights-finetune.{epoch:03d}-{val_loss:.4f}.hdf5'
