@@ -36,23 +36,23 @@ def train_pixelnet(dataset, batchsize, npix, max_epochs, validation_steps, run_i
 
     datadir = 'data'
     datafile = os.path.join(datadir, '{}.h5'.format(dataset))
-    
+
     validation_set_path = os.path.join(datadir, '{}-validation-sets.json'.format(dataset))
     validation_set = data.load_validation_set(validation_set_path, run_id)
-    
+
     if dataset == 'uhcs':
         nclasses = 4
         cropbar = 38
     elif dataset == 'spheroidite':
         nclasses = 2
         cropbar = None
-        
+
     model_dir = os.path.join('models', 'crossval', dataset, 'run{:02d}'.format(run_id))
     if not os.path.isdir(model_dir):
         os.makedirs(model_dir)
-    
+
     images, labels, names = data.load_dataset(datafile, cropbar=cropbar)
-    
+
     # add a channel axis (of size 1 since these are grayscale inputs)
     images = images[:,:,:,np.newaxis]
     images = np.repeat(images, 3, axis=-1)
@@ -61,7 +61,7 @@ def train_pixelnet(dataset, batchsize, npix, max_epochs, validation_steps, run_i
     # train/validation split
     train_idx, val_idx = data.validation_split(validation_set, names)
     ntrain = len(train_idx)
-    
+
     X_train, y_train, names_train = images[train_idx], labels[train_idx], names[train_idx]
     X_val, y_val, names_val = images[val_idx], labels[val_idx], names[val_idx]
 
@@ -80,7 +80,7 @@ def train_pixelnet(dataset, batchsize, npix, max_epochs, validation_steps, run_i
 
     max_epochs = 25
     validation_steps = 10
-    
+
     base_model = vgg.fully_conv_model()
 
     layernames = [
@@ -88,8 +88,8 @@ def train_pixelnet(dataset, batchsize, npix, max_epochs, validation_steps, run_i
     ]
 
     hc = hypercolumn.build_model(base_model, layernames, batchnorm=True, mode='sparse', relu=False)
-    model = pixelnet.build_model(hc, width=1024, mode='sparse', dropout_rate=0.2, l2_reg=0.0)
-    
+    model = pixelnet.build_model(hc, nclasses=nclasses, width=1024, mode='sparse', dropout_rate=0.2, l2_reg=0.0)
+
     opt = adamw.Adam(lr=1e-3, weight_decay=1e-4, amsgrad=True)
     for layer in base_model.layers:
         layer.trainable = False
@@ -112,7 +112,7 @@ def train_pixelnet(dataset, batchsize, npix, max_epochs, validation_steps, run_i
         replace_samples=False, horizontal_flip=True, vertical_flip=True
     )
 
-    
+
     f = model.fit_generator(
         training_data,
         steps_per_epoch,
