@@ -1,6 +1,6 @@
 import keras.backend as K
 
-def focal_crossentropy_loss(focus_param=2, balance_param=0.25, average=False, class_weights=None):
+def focal_crossentropy_loss(focus_param=2, balance_param=0.5, average=False, class_weights=None):
     """ arXiv:1708.02002 
     focus_param: gamma
     balance_param: alpha
