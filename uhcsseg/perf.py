@@ -7,13 +7,13 @@ from skimage.measure import label, regionprops
 
 def accuracy(prediction, annotation):
     """ pixel-wise accuracy (percentage) """
-    return 100 * (np.sum(prediction == annotation) / annotation.size)
+    return (np.sum(prediction == annotation) / annotation.size)
 
 def IU(prediction, annotation, cls):
     """ intersection over union accuracy for class == cls """
     numerator = np.sum(np.logical_and((prediction == cls), (annotation == cls)))
     denominator = np.sum(np.logical_or((prediction == cls), (annotation == cls)))
-    return 100 * (numerator / denominator)
+    return (numerator / denominator)
 
 def IU_avg(prediction, annotation, classlist=None):
     """ IU averaged over all classes """
