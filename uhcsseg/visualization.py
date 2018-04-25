@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from keras.models import Model
 from sklearn.decomposition import PCA
 
+import matplotlib.patches as patches
 from skimage.color import label2rgb
 from skimage.segmentation import mark_boundaries
 import seaborn as sns
@@ -21,20 +22,44 @@ def colorize_labels(lab, mark=False):
 
     # map colors with numpy fancy indexing
     c = colors[lab]
-  
+
     if mark:
         c = mark_boundaries(c, label_img=lab, color=(0,0,0), mode='inner')
     return c
+
+def add_scalebar(ax, pixel_scale, scalebar_extent=10, scalebar_height=5, alpha=0.8):
+    """ overlay a scale bar (extent in microns) on matplotlib axis ax
+    pixel_size: pixels/micron
+    """
+
+    xlim, ylim = ax.get_xlim(), ax.get_ylim()
+    w, h = np.abs(xlim).sum(), np.abs(ylim).sum()
+
+    scalebar_x = 32
+    scalebar_y = h-32
+
+    ax.add_patch(
+        patches.Rectangle(
+            (scalebar_x, scalebar_y),
+            pixel_scale*scalebar_extent,
+            scalebar_height,
+            facecolor='w',
+            edgecolor='k',
+            linewidth=1,
+            alpha=alpha
+        )
+    )
+    return
 
 def colorize_pca_tensor(x):
     """ map the PCA pixel features into the range [0,1] to reinterpret as RGB values """
     # center and normalize each channel
     # this is sort of like PCA whitening...
     x = x - np.mean(x, axis=0) / np.std(x, axis=0)
-    
+
     # rescale to roughly [-1, 1]
     x = x / np.max(np.abs(x))
-    
+
     # shift and clip to [0, 1]
     return np.clip((x + 1) / 2, 0, 1)
 
@@ -44,18 +69,18 @@ def channel_pca(base_model, layername, input_data, output_channels=3, batch_size
         inputs=base_model.input,
         outputs=base_model.get_layer(layername).output
     )
-    
+
     y = model.predict(input_data, batch_size=batch_size)
-    
+
     b, h, w, c = y.shape
     features = y.reshape(-1, c)
-    
+
     if features.shape[0] > 1e5:
         idx = np.random.choice(features.shape[0], size=100000)
         pca = PCA(n_components=output_channels, whiten=True).fit(features[idx])
     else:
         pca = PCA(n_components=output_channels, whiten=True).fit(features)
-        
+
     x = pca.transform(features)
 
     if colorize and output_channels == 3:
@@ -71,24 +96,24 @@ def plot_crossval_predictions(datafile, resultsfile, cropbar=None):
     with h5py.File(resultsfile) as f:
         keys = list(f.keys())
         probs = [f[k][...] for k in keys]
-    
+
     for ax, p, k in zip(axes.T, probs, keys):
         with h5py.File(datafile, 'r') as f:
             i, l = data.load_record(f, str(k), cropbar=cropbar)
-        
+
         pl = np.argmax(p, axis=-1)
         ax[0].imshow(i, cmap='gray')
         ax[1].imshow(colorize_labels(l))
         ax[2].imshow(colorize_labels(pl))
-    
+
         if first:
             axlabels = ('input', 'annotation', 'prediction')
             for a, label in zip(ax, axlabels):
                 a.set_ylabel(label, size=24)
             first = False
-        
+
     for a in axes.flat:
         a.get_xaxis().set_ticks([])
         a.get_yaxis().set_ticks([])
-    
+
     plt.tight_layout()
