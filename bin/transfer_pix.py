@@ -53,6 +53,8 @@ def train_pixelnet(dataset, batchsize, npix, max_epochs, validation_steps, run_i
 
     images, labels, names = data.load_dataset(datafile, cropbar=cropbar)
 
+    images = data.preprocess_images(images, equalize=True, tf=False)
+
     # add a channel axis (of size 1 since these are grayscale inputs)
     images = images[:,:,:,np.newaxis]
     images = np.repeat(images, 3, axis=-1)
@@ -67,6 +69,10 @@ def train_pixelnet(dataset, batchsize, npix, max_epochs, validation_steps, run_i
 
     inv_freq = y_train.size / np.bincount(y_train.flat)
     class_weights = np.squeeze(normalize(np.sqrt(inv_freq), order=1))
+
+    # don't use alpha-balanced version of focal loss...
+    # class_weights = None
+    focus_param = 2.0
 
     # write the validation set to the model directory as well...
     with open(os.path.join(model_dir, 'validation_set.txt'), 'w') as vf:
@@ -88,13 +94,19 @@ def train_pixelnet(dataset, batchsize, npix, max_epochs, validation_steps, run_i
     ]
 
     hc = hypercolumn.build_model(base_model, layernames, batchnorm=True, mode='sparse', relu=False)
-    model = pixelnet.build_model(hc, nclasses=nclasses, width=1024, mode='sparse', dropout_rate=0.2, l2_reg=0.0)
+    model = pixelnet.build_model(hc, nclasses=nclasses, width=1024, mode='sparse', dropout_rate=0.1, l2_reg=0.0)
 
-    opt = adamw.Adam(lr=1e-3, weight_decay=1e-4, amsgrad=True)
+    opt = adamw.AdamW(lr=1e-3, weight_decay=5e-4, amsgrad=True)
     for layer in base_model.layers:
         layer.trainable = False
 
-    model.compile(loss=losses.focal_crossentropy_loss(class_weights=class_weights), optimizer=opt, metrics=['acc'])
+
+    # model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['acc'])
+    model.compile(
+        loss=losses.focal_crossentropy_loss(focus_param=focus_param, class_weights=class_weights),
+        optimizer=opt,
+        metrics=['acc']
+    )
 
     csv_logger = callbacks.CSVLogger(os.path.join(model_dir, 'training-1.log'))
     checkpoint = callbacks.ModelCheckpoint(
@@ -109,7 +121,8 @@ def train_pixelnet(dataset, batchsize, npix, max_epochs, validation_steps, run_i
 
     training_data = px_utils.random_pixel_samples(
         X_train, y_train, nclasses=nclasses,
-        replace_samples=False, horizontal_flip=True, vertical_flip=True
+        replace_samples=False, horizontal_flip=True, vertical_flip=True,
+        rotation_range=360, zoom_range=0.5, intensity_shift=0.05
     )
 
 
@@ -126,8 +139,12 @@ def train_pixelnet(dataset, batchsize, npix, max_epochs, validation_steps, run_i
         layer.trainable = True
 
     # fine-tune the whole network
-    opt = adamw.Adam(lr=1e-4, weight_decay=1e-4, amsgrad=True)
-    model.compile(loss=losses.focal_crossentropy_loss(class_weights=class_weights), optimizer=opt, metrics=['acc'])
+    opt = adamw.AdamW(lr=1e-5, weight_decay=5e-4, amsgrad=True)
+    model.compile(
+        loss=losses.focal_crossentropy_loss(focus_param=focus_param, class_weights=class_weights),
+        optimizer=opt,
+        metrics=['acc']
+    )
 
     csv_logger = callbacks.CSVLogger(os.path.join(model_dir, 'finetune-1.log'))
     checkpoint = callbacks.ModelCheckpoint(
@@ -137,7 +154,7 @@ def train_pixelnet(dataset, batchsize, npix, max_epochs, validation_steps, run_i
         ),
         save_best_only=False,
         save_weights_only=True,
-        period=5
+        period=25
     )
 
     f = model.fit_generator(

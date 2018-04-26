@@ -1,9 +1,9 @@
 from keras.optimizers import *
 
-class Adam(Optimizer):
+class AdamW(Optimizer):
     """Adam optimizer.
     From keras Adam implementation...
-    
+
     Default parameters follow those provided in the original paper.
 
     using corrected weight decay: https://arxiv.org/abs/1711.05101
@@ -26,7 +26,7 @@ class Adam(Optimizer):
 
     def __init__(self, lr=0.001, beta_1=0.9, beta_2=0.999,
                  epsilon=None, decay=0., amsgrad=False, weight_decay=0.0, **kwargs):
-        super(Adam, self).__init__(**kwargs)
+        super(AdamW, self).__init__(**kwargs)
         with K.name_scope(self.__class__.__name__):
             self.iterations = K.variable(0, dtype='int64', name='iterations')
             self.lr = K.variable(lr, name='lr')
@@ -88,7 +88,8 @@ class Adam(Optimizer):
                   'beta_1': float(K.get_value(self.beta_1)),
                   'beta_2': float(K.get_value(self.beta_2)),
                   'decay': float(K.get_value(self.decay)),
+                  'weight_decay': float(K.get_value(self.weight_decay)),
                   'epsilon': self.epsilon,
                   'amsgrad': self.amsgrad}
-        base_config = super(Adam, self).get_config()
+        base_config = super(AdamW, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
