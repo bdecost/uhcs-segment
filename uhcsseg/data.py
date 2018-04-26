@@ -1,6 +1,7 @@
 import json
 import h5py
 import numpy as np
+from skimage import exposure
 from scipy.misc import bytescale
 
 from enum import IntEnum
@@ -24,7 +25,7 @@ def load_record(f, key, cropbar=None):
     im = micrograph['image'][...]
     l = micrograph['labels'][...]
 
-    im = im.astype(np.float32)
+    # im = im.astype(np.float32)
 
     if cropbar is not None and cropbar > 0:
         # remove micron bar from bottom of image
@@ -34,32 +35,52 @@ def load_record(f, key, cropbar=None):
 
 def load_dataset(hfile, cropbar=None):
     """ load uhcsseg training data from hdf5 """
-    
+
     images, labels, names = [], [], []
     with h5py.File(hfile, 'r') as f:
         for key in f:
             if key in exclude:
                 continue
-            im, l = load_record(f, key, cropbar=cropbar)   
-            names.append(key)       
+            im, l = load_record(f, key, cropbar=cropbar)
+            names.append(key)
             images.append(im)
             labels.append(l)
-            
+
     return np.array(images), np.array(labels), np.array(names)
 
-def preprocess_images(images, normalize=False):
+def whiten_intensity(images):
+    """ batch-wise image intensity whitening """
+
+    I = images.copy()
+    for idx, im in enumerate(images):
+        I[idx] = (im - im.mean()) / im.std()
+
+    return I
+
+def preprocess_images(images, normalize=False, equalize=False, tf=True):
+
     """ preprocess images """
+    # images = images.astype(np.float)
+    if equalize:
+        I = images.copy().astype(np.float)
+        for idx, im in enumerate(images):
+            im = exposure.equalize_adapthist(im.astype(np.uint8))
+            I[idx] = exposure.rescale_intensity(im, out_range='uint8')
+
+        images = I
+
     if normalize:
         # zero-mean and unit variance scaling
         images = (images - np.mean(images)) / np.std(images)
-    else:
+
+    elif tf:
         # just remap intensities to (-1,1)
         images = images / 255.0
         images = images - 0.5
         images = 2 * images
 
     return images
-    
+
 def load_validation_set(validation_set_path, run_id):
     with open(validation_set_path, 'r') as jf:
         jdata = json.load(jf)
