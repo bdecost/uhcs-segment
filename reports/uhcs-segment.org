@@ -11,12 +11,13 @@
 #+LATEX_HEADER: \usepackage[utf8]{inputenc}
 #+LATEX_HEADER: \usepackage[T1]{fontenc}
 #+LATEX_HEADER: \usepackage{subcaption}
-#+LATEX_HEADER: \graphicspath{{figures/}}
+#+LATEX_HEADER: \graphicspath{{figures/}, {all-figures/}}
 
 #+LATEX_HEADER: \usepackage[backref=true,backend=biber,sorting=none,citestyle=numeric-comp]{biblatex}
 # #+LATEX_HEADER: \usepackage[backend=biber,bibencoding=ascii,language=auto,bibstyle=nature,citestyle=numeric-comp,url=true, doi=true,sorting=none, maxbibnames=10,natbib=true]{biblatex}
 #+LATEX_HEADER: \addbibresource{uhcs-segment.bib}
-#+LATEX_HEADER: \addbibresource{/Users/brian/Research/bibliography/references.bib}
+#+LATEX_HEADER: \addbibresource{/Users/bld/Documents/bibliography/references.bib}
+#+LATEX_HEADER: \addbibresource{/Users/bld/Documents/bibliography/rex_references.bib}
 # \renewcommand*{\bibfont}{\scriptsize}
 #+LATEX_HEADER: \hypersetup{colorlinks=true}
 
@@ -161,7 +162,8 @@ The {{{ws}}} predictions show the highest amount of noise; {{{ws}}} is often mis
 In addition to the low areal fraction of {{{ws}}} cementite, one potential contributing factor for this failure mode is labeling bias where the microstructure is ambiguous even to the human expert.
 
 \begin{figure}[!htbp]
-  \includegraphics[width=\textwidth]{validation_predictions_uhcs_03}
+  % \includegraphics[width=\textwidth]{validation_predictions_uhcs_03}
+  \includegraphics[width=\textwidth]{uhcs_predictions_separate_run3}
   \caption{Validation set predictions for the complex microconstituent segmentation task.}
   \label{fig:microconstituentresults}
 \end{figure}
@@ -173,16 +175,28 @@ For both architectures, the models are consistently good at identifying spheroid
 The less prevalent microconstituents (matrix and {{{ws}}}) are not as well captured, and show higher variation between images.
 Including the bottleneck feature map (conv_7) does not significantly affect performance, except to reduce the IU score for the {{{ws}}} microconstituent.
 
-#+CAPTION: Semantic segmentation performance averaged over validation images. Uncertainties are standard errors calculated across validation folds.
-#+NAME: tab:semanticsegmentationperf
-| metric        | {1_2,2_2,3_3,4_3,5_3} | {1_2,2_2,3_3,4_3,5_3,7} |
-|---------------+-----------------------+-------------------------|
-| matrix        | 64.8 $\pm$ 2.3        | 63.7 $\pm$ 2.0          |
-| network       | 86.3 $\pm$ 2.7        | 85.8 $\pm$ 3.5          |
-| spheroidite   | 90.5 $\pm$ 1.7        | 89.8 $\pm$ 1.9          |
-| widmanstätten | 40.0 $\pm$ 4.3        | 31.2 $\pm$ 3.7          |
-| IU_{avg}      | 69.8 $\pm$ 2.2        | 68.8 $\pm$ 2.5          |
-| AC            | 91.6 $\pm$ 1.4        | 90.9 $\pm$ 1.7          |
+# #+CAPTION: Semantic segmentation performance averaged over validation images. Uncertainties are standard errors calculated across validation folds.
+# #+NAME: tab:semanticsegmentationperf
+# | metric        | {1_2,2_2,3_3,4_3,5_3} | {1_2,2_2,3_3,4_3,5_3,7} |
+# |---------------+-----------------------+-------------------------|
+# | matrix        | 64.8 $\pm$ 2.3        | 63.7 $\pm$ 2.0          |
+# | network       | 86.3 $\pm$ 2.7        | 85.8 $\pm$ 3.5          |
+# | spheroidite   | 90.5 $\pm$ 1.7        | 89.8 $\pm$ 1.9          |
+# | widmanstätten | 40.0 $\pm$ 4.3        | 31.2 $\pm$ 3.7          |
+# | IU_{avg}      | 69.8 $\pm$ 2.2        | 68.8 $\pm$ 2.5          |
+# | AC            | 91.6 $\pm$ 1.4        | 90.9 $\pm$ 1.7          |
+
+# #+CAPTION: Semantic segmentation performance averaged over validation images. Uncertainties are standard errors calculated across validation folds.
+# #+NAME: tab:semanticsegmentationperf
+#+ATTR_LATEX: :align lcccc
+|               | IU                | precision         | recall            | F1                |
+|---------------+-------------------+-------------------+-------------------+-------------------|
+| matrix        | 0.629 $\pm$ 0.289 | 0.703 $\pm$ 0.322 | 0.818 $\pm$ 0.108 | 0.726 $\pm$ 0.265 |
+| network       | 0.688 $\pm$ 0.151 | 0.794 $\pm$ 0.148 | 0.832 $\pm$ 0.093 | 0.806 $\pm$ 0.109 |
+| spheroidite   | 0.652 $\pm$ 0.107 | 0.791 $\pm$ 0.126 | 0.785 $\pm$ 0.040 | 0.784 $\pm$ 0.079 |
+| widmanstatten | 0.387 $\pm$ 0.221 | 0.595 $\pm$ 0.205 | 0.588 $\pm$ 0.275 | 0.524 $\pm$ 0.213 |
+| overall       | 0.626 $\pm$ 0.245 | 0.728 $\pm$ 0.248 | 0.791 $\pm$ 0.210 | 0.737 $\pm$ 0.221 |
+
 
 ** Spheroidite particle segmentation
 *** Qualitative results  :ignore:
@@ -199,15 +213,35 @@ The PixelNet model performs slightly better than Otsu's thresholding method cite
 One source of bias in these performance measurements are missing particles in the annotations, either from the removal of particles intersecting the image border, or from failure of the semi-automated annotation method itself.
 An additional source of bias stems from the application of the watershed algorithm cite:vincent1991 to split conjoined particles in the annotations; watershed segmentation is not presently applied to the particle predictions.
 
+# #+CAPTION: Segmentation performance on validation sets
+# #+NAME: tab:particlesegmentationperf
+# | model                            | matrix         | spheroidite     | IU_{avg}       | AC             | PSD KS |
+# |----------------------------------+----------------+-----------------+----------------+----------------+--------|
+# | otsu                             | 86.2 $\pm$ 7.2 | 53.7 $\pm$ 12.1 | 69.9 $\pm$ 9.3 | 88.1 $\pm$ 6.1 | -      |
+# | thresholded blur\cite{hecht2017} | -              | -               | -              | -              | -      |
+# |----------------------------------+----------------+-----------------+----------------+----------------+--------|
+# | {1_2,2_2,3_3,4_3,5_3}            | 91.7 $\pm$ 0.5 | 56.8 $\pm$ 1.5  | 74.3 $\pm$ 0.8 | 92.6 $\pm$ 0.4 | 0.208  |
+# | {1_2,2_2,3_3,4_3,5_3,7}          | 91.8 $\pm$ 0.6 | 56.9 $\pm$ 2.3  | 74.4 $\pm$ 1.3 | 92.6 $\pm$ 0.6 | 0.166  |
+
+
+#+CAPTION: Semantic segmentation performance averaged over validation images. Uncertainties are standard errors calculated across validation folds.
+#+NAME: tab:particleperf
+#+ATTR_LATEX: :align lcccc
+ |             | IU                | precision         | recall            | F1                |
+ |-------------+-------------------+-------------------+-------------------+-------------------|
+ | matrix      | 0.745 $\pm$ 0.156 | 0.854 $\pm$ 0.087 | 0.836 $\pm$ 0.118 | 0.844 $\pm$ 0.103 |
+ | spheroidite | 0.691 $\pm$ 0.231 | 0.901 $\pm$ 0.030 | 0.742 $\pm$ 0.247 | 0.795 $\pm$ 0.164 |
+ | overall     | 0.724 $\pm$ 0.213 | 0.848 $\pm$ 0.141 | 0.824 $\pm$ 0.193 | 0.818 $\pm$ 0.176 |
+
+
 #+CAPTION: Segmentation performance on validation sets
 #+NAME: tab:particlesegmentationperf
-| model                            | matrix         | spheroidite     | IU_{avg}       | AC             | PSD KS |
-|----------------------------------+----------------+-----------------+----------------+----------------+--------|
-| otsu                             | 86.2 $\pm$ 7.2 | 53.7 $\pm$ 12.1 | 69.9 $\pm$ 9.3 | 88.1 $\pm$ 6.1 | -      |
-| thresholded blur\cite{hecht2017} | -              | -               | -              | -              | -      |
-|----------------------------------+----------------+-----------------+----------------+----------------+--------|
-| {1_2,2_2,3_3,4_3,5_3}            | 91.7 $\pm$ 0.5 | 56.8 $\pm$ 1.5  | 74.3 $\pm$ 0.8 | 92.6 $\pm$ 0.4 | 0.208  |
-| {1_2,2_2,3_3,4_3,5_3,7}          | 91.8 $\pm$ 0.6 | 56.9 $\pm$ 2.3  | 74.4 $\pm$ 1.3 | 92.6 $\pm$ 0.6 | 0.166  |
+#+ATTR_LATEX: :align lccccc
+| model    | matrix           | spheroidite       | IU_{avg}          | AC                | PSD KS |
+|----------+------------------+-------------------+-------------------+-------------------+--------|
+| otsu     | 86.2 $\pm$ 7.2   | 53.7 $\pm$ 12.1   | 69.9 $\pm$ 9.3    | 88.1 $\pm$ 6.1    | -      |
+|----------+------------------+-------------------+-------------------+-------------------+--------|
+| pixelnet | 0.745 $\pm$ 0.15 | 0.691 $\pm$ 0.231 | 0.724 $\pm$ 0.213 | 0.911 $\pm$ 0.044 | 0.042  |
 
 *** model misses small particles --> low KS score :ignore:
 The KS test suggests we reject the null hypothesis that the predicted and ground truth particle size distributions are equivalent for 5 of the validation micrographs for the no-bottleneck model (4 for the bottleneck model).
@@ -215,7 +249,8 @@ The difficulty in detecting small particles explains the discrepancies between e
 For the two validation micrographs in Figure ref:fig:spheroiditeresults containing fine particles, the particle size histograms and prediction maps show that the model often entirely misses particles with radii smaller than 5px.
 
 \begin{figure}[!htbp]
-  \includegraphics[width=\textwidth]{psd_run04}
+  % \includegraphics[width=\textwidth]{psd_run04}
+  \includegraphics[width=\textwidth]{spheroidite_psd_run4}
   \caption{Independent test set predictions for the spheroidite particle segmentation task.}
   \label{fig:spheroiditeresults}
 \end{figure}
@@ -235,7 +270,8 @@ This approach allows us to collect particle size distributions from micrographs 
 With an appropriate number of images, one could also compute particle size distributions spatially conditioned on other microstructure features (e.g. distance from the network phase), which could help lead to insights into operative microstructure evolution mechanisms (particle coarsening vs precipitation).
 
 \begin{figure}[!htbp]
-  \includegraphics[width=\textwidth]{combined_model_run01}
+  % \includegraphics[width=\textwidth]{combined_model_run01}
+  \includegraphics[width=\textwidth]{uhcs_predictions_joint_psd_run4}
   \caption{Independent test set predictions for spheroidite segmentation results in micrographs with multiple microconstituents.}
   \label{fig:fused}
 \end{figure}
@@ -248,7 +284,8 @@ Specifically, the denuded zone width distributions in Figures ref:fig:denuded_zo
 Figures ref:fig:denuded_zone b and c also exhibit some overprediction of the denuded zone width where the particles are very fine, particularly in the lower left corner of Figure ref:fig:denuded_zone b.
 
 \begin{figure}[!htbp]
-  \includegraphics[width=\textwidth]{denuded_zone_run05}
+  % \includegraphics[width=\textwidth]{denuded_zone_run05}
+  \includegraphics[width=\textwidth]{uhcs_denuded_zone_run2}
   \caption{Denuded zone width distribution measured from semantic microconstituent prediction map. The network interface is shown in blue and the particle matrix interface is shown in yellow.}
   \label{fig:denuded_zone}
 \end{figure}
