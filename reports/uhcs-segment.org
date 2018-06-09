@@ -1,6 +1,6 @@
-#+TITLE: Enabling high throughput quantitative metallography for complex microstructures with deep semantic segmentation models: a case study in ultrahigh carbon steel
+#+TITLE: High throughput quantitative metallography for complex microstructures using deep learning: A case study in ultrahigh carbon steel
 #+AUTHOR: 
-
+# #+LATEX_CLASS: elsarticle
 #+OPTIONS:   H:4 num:t toc:nil \n:nil @:t ::t |:t ^:t -:t f:t *:t <:t
 #+OPTIONS:   TeX:t LaTeX:t skip:nil d:nil todo:nil pri:nil tags:not-in-toc
 
@@ -25,7 +25,7 @@
 
 #+BEGIN_ABSTRACT
 We apply a deep convolutional neural network segmentation model to enable novel automated microstructure segmentation applications for complex microstructures typically evaluated manually and subjectively.
-We explore two microstructure segmentation tasks in an openly-available ultrahigh carbon steel microstructure dataset cite:uhcsdb: segmenting cementite particles in the spheroidized matrix, and segmenting larger fields of view featuring grain boundary carbide, spheroidized particle matrix, particle-free grain boundary denuded zone, Widmanstätten cementite.
+We explore two microstructure segmentation tasks in an openly-available ultrahigh carbon steel microstructure dataset cite:uhcsdb,uhcsdata: segmenting cementite particles in the spheroidized matrix, and segmenting larger fields of view featuring grain boundary carbide, spheroidized particle matrix, particle-free grain boundary denuded zone, and Widmanstätten cementite.
 We also demonstrate how to combine these data-driven microstructure segmentation models to obtain empirical cementite particle size and denuded zone width distributions from more complex micrographs containing multiple microconstituents.
 #+END_ABSTRACT
 
@@ -51,7 +51,7 @@ In this report, train a pixelwise CNN cite:bansal2017 to segment microstructures
 We evaluate the feasibility of this approach on a subset of the openly available Utrahigh Carbon Steel (UHCS) microstructure dataset cite:uhcsdb,hecht2016,hecht2017.
 CNNs can distinguish between the four principal microconstituents in this heat-treated UHCS: proeutectoid cementite network, fields of spheroidite particles, the ferritic matrix in the particle-free denuded zone near the network, and {{{ws}}} lath.
 We also train a network to segment individual spheroidite particles, and briefly explore automated microstructure metrology techniques enabled by this kind of powerful segmentation model.
-Our training data and annotations for both microstructure segmentation tasks will be publicly available through the NIST materials resource registry.
+Our training data and annotations for both microstructure segmentation tasks will be publicly available through the NIST materials resource registry cite:uhcsannotations.
 
 *** Summary of contributions 					     :ignore:
 Our primary contributions are:
@@ -84,15 +84,16 @@ This is attractive for quickly training segmentation networks from scratch with 
 
 
 **** layer configuration 					     :ignore:
-The feature extraction portion of our PixelNet variant uses the VGG-16 architecture cite:simonyan2014 used by the original PixelNet cite:bansal2017; this architecture consists of 13 convolution layers and two fully-connected layers {1_1, 1_2, 2_1, 2_2, 3_1, 3_2, 3_3, 4_1, 4_2, 4_3, 5_1, 5_2, 5_3, 6, 7}.
+The feature extraction portion of our PixelNet variant uses the VGG-16 architecture cite:simonyan2014 used by the original PixelNet cite:bansal2017; this architecture consists of 13 convolution layers and two fully-connected layers ${1_1, 1_2, 2_1, 2_2, 3_1, 3_2, 3_3, 4_1, 4_2, 4_3, 5_1, 5_2, 5_3, 6, 7}$.
 The MLP layers in our PixelNet variant consist of 1024 neurons with rectified linear (ReLU) activations cite:nair2010 ($ReLU(y_i) = \max(0, y_i)$ followed by batch normalization cite:ioffe2015.
 Following the original PixelNet implementation, our hypercolumn features consist of the highest convolution feature map within each block of the VGG architecture ({1_2,2_2,3_3,4_3,5_3,7}), converting layer $7$ to a $7\times7$ convolution filter as in cite:long2015 and cite:bansal2017.
 We apply batch normalization cite:ioffe2015 to each VGG-16 feature map before upsampling via bilinear interpolation, immediately after the ReLU activations.
 
 \begin{figure}[!htbp]
   \frame{
-  \includegraphics[width=\textwidth]{architecture-scratch}}
-  \caption{Inspiration: PixelNet. Top: semantic microstructure segmentation based on manually annotated UHCS microconstituents, including proeutectoid grain boundary cementite (light blue), ferritic matrix (dark blue), spheroidite particles (yellow), and Widmanstätten cementite (green).}
+  % \includegraphics[width=\textwidth]{architecture-scratch}}
+  \includegraphics[width=\textwidth]{architecture_eah}}
+  \caption{The PixelNet approach to image segmentation. A pixel in the input image (left) is represented by the concatenation of its representations in each convolution layer (white dots). A multilayer perceptron (MLP) classifier is trained to associate the pixel representation with membership in a microstructure constituent (right).}
   \label{fig:architecture}
 \end{figure}
 
@@ -110,16 +111,16 @@ Each gradient update is computed from a random sample of 2048 pixels each from 4
 We then fine-tune the entire CNN for 125 additional gradient updates using AdamW with an initial learning rate of 10^{-5}.
 
 
-To deal with the heavy class imbalance (e.g. {{{ws}}} cementite only accounts for \sim 3% of pixels), we use the Focal loss cite:lin17_focal_loss_dense_objec_detec.
+To deal with the heavy class imbalance (e.g. {{{ws}}} cementite only accounts for \sim 3% of pixels), we use the focal loss cite:lin17_focal_loss_dense_objec_detec.
 # weighted form of the standard categorical cross-entropy classification loss function that emphasizes examples 
 The focal loss extends the standard cross-entropy classification loss function $CrossEntropy(p_t) = - \log(p_t)$, where
 
-\begin{equation*}
+\begin{equation}
 p_t(p, y) = \begin{cases}
 p & \mathrm{if } y = 1 \\
 1-p & \mathrm{if } y = 0
 \end{cases}
-\end{equation*}
+\end{equation}
 
 with ground truth $y$ and predicted class probability $p = P(y = 1)$.
 The focal loss adds a modulating factor $(1-p_t)^\gamma$ to emphasize examples about which the classifier is less confident during training, and a scaling parameter $\alpha$ to account for class imbalance:
@@ -131,7 +132,7 @@ FocalLoss(p_t) = - \alpha_t (1-p_t)^\gamma \log(p_t)
 We follow the recommendation of cite:lin17_focal_loss_dense_objec_detec in setting the focusing parameter $\gamma = 2$ and setting the class imbalance parameters $\alpha_t$ proportionally to the inverse frequency of each class.
 
 ** Dataset
-The semantic microstructure segmentation dataset consists of 24 manually annotated[fn:3] micrographs from the open UHCS dataset cite:uhcsdb,uhcsdata.
+The semantic microstructure segmentation dataset consists of 24 manually annotated[fn:3] micrographs from the open UHCS dataset cite:uhcsdb,uhcsdata; examples are shown in Figure ref:fig:microconstituentresults and in the online supplemental materials.
 These $645 \times 484$ pixel micrographs focus on the characteristic features of heat-treated UHCS: the proeutectoid cementite network and the associated denuded zone, and spheroidized and {{{ws}}} cementite.
 Multiple heat treatment conditions and magnifications are represented in the semantic microstructure segmentation dataset.
 
@@ -150,23 +151,28 @@ We use a 6-fold cross-validation scheme cite:Hastie_2001: each dataset is split 
 The quantitative performance metrics reported in Tables ref:tab:semanticsegmentationperf and ref:tab:particlesegmentationperf are averages over each validation image in the 6 validation sets; uncertainties are standard errors computed over the six validation images cite:Hastie_2001.
 
 *** IU and AC 							     :ignore:
-We report several standard evaluation metrics for semantic segmentation tasks: pixel accuracy (AC), region intersection over union (IU), and precision, recall, and average precision (AP) for individual microconstituents.
+We report several standard evaluation metrics for semantic segmentation tasks: pixel accuracy (AC), precision, recall, and region intersection over union (IU) for individual microconstituents.
 For each of these metrics, a higher score indicates better performance.
 
-Accuracy (AC) is the fraction of pixels correctly predicted: $AC := \sum_i^N \frac{\hat{y_i} = y_i}{N}$, where $\hat{y_i}$ indicates the predicted class label for each pixel $i$, $y_i$ indicates the corresponding ground truth class label, and $N$ is the total number of pixels.
 Precision is the fraction of instances predicted to have class $c$ that are correct:
 
 \begin{equation}
 Precision(c) = \frac{ \sum_i \hat{y_i} = c \textrm{ and } y_i = c}{\sum_i \hat{y_i} = c}
 \end{equation}
 
+where where $\hat{y}_i$  indicates the predicted class label for each pixel $i$, and $y_i$  indicates the corresponding ground truth class label.
+Equivalently, precision is the ratio of true positives to total (true and false) positives, which decreases when the model overpredicts the number of member pixels in a class. 
+
 Recall is the fraction of instances with ground truth class $c$ that are predicted to have class $c$:
 
 \begin{equation}
-Recall(c) = \frac{\sum_i \hat{y_i} = \textrm{ and } y_i = c}{\sum_i y_i = c}
+Recall(c) = \frac{\sum_i \hat{y_i} = c \textrm{ and } y_i = c}{\sum_i y_i = c}
 \end{equation}
 
-The intersection over union metric $IU(c)$ for class $c$ (also referred to as the Jaccard metric) is the ratio of correctly predicted pixels of class $c$ to the union of pixels with either ground truth or predicted class $c$:
+Equivalently, recall is the ratio of true positives to the total number of pixels in a class, which decreases when the method underpredicts the member pixels in a class.
+Since the overall accuracy is defined as the number of true positives divided by the total number of pixels, it is straightforward to show that the classwise average recall or precision equals the overall accuracy.
+
+The intersection over union metric $IU(c)$ for class $c$ (also referred to as the Jaccard metric) is the ratio of correctly predicted pixels of class $c$ (true positives) to the union of pixels with either ground truth or predicted class $c$ (true and false positives plus false negatives):
 
 \begin{equation}
 IU(c) = \frac{\sum_i \hat{y_i} = c \textrm{ and } y_i = c}{\sum_i \hat{y_i} = c \textrm{ or } y_i = c }
@@ -179,7 +185,7 @@ IU(c) = \frac{\sum_i \hat{y_i} = c \textrm{ and } y_i = c}{\sum_i \hat{y_i} = c 
 *** KS test for PSD 						     :ignore:
 For the spheroidite particle segmentation task, we also report performance metrics comparing particle size distributions obtained from the model predictions with those obtained from the ground truth annotations (as reported in cite:hecht2017).
 We use the two-sample Kolmogorov-Smirnov (KS) test cite:Massey_1951 to compare each pair of predicted and ground truth PSDs.
-The KS scores (higher is better) reported in Table ref:tab:particlesegmentationperf are the fraction of micrographs where the KS test indicates that the predicted particle size distribution is not consistent with the ground truth particle size distribution (i.e. the fraction of micrographs where the null hypothesis is rejected at the 95% confidence level).
+The KS score reported in Table ref:tab:particlesegmentationperf is the fraction of micrographs where the KS test indicates that the predicted particle size distribution is consistent with the ground truth particle size distribution (i.e. the fraction of micrographs where we fail to reject (at the 95% confidence level) the null hypothesis that the distributions are equivalent).
 
 ** Computing denuded zone widths \label{sec:dzw}
 *** overview :ignore:
@@ -189,14 +195,14 @@ In practice we compute a map of Euclidean distance to the network phase, and sel
 *** computational details 					     :ignore:
 To obtain the denuded zone interface, we apply a series of image processing techniques to clean up the microconstituent prediction map, so that only the matrix predictions associated with the diffusion-limited denuded zone adjacent to the proeutectoid cementite network remain.
 A morphological filling operation removes any matrix pixels within the network.
-Matrix regions that are not connected to the network by applying a morphological closing to matrix phase and removing matrix segments that do not intersect the network phase.
+Matrix regions that are not connected to the network are identified by application of a morphological closing to matrix phase: any matrix segments that do not intersect the network phase after the morphological operation are removed.
 Finally, we remove any matrix predictions that are closer to a widmanstatten region than to a network region, and subsequently remove the widmanstatten regions.
 The region boundaries on the cleaned up label image (shown in Figure \ref{fig:denuded_zone}) include only the interface of the proeutectoid cementite network phase (indicated in blue) and the diffuse interface of the denuded zone (indicated in yellow).
 
 * Results and Discussion
 ** Semantic microconstituent segmentation
 *** Qualitative results :ignore:
-Figure ref:fig:microconstituentresults shows microconstituent annotations and predictions for the four validation set micrographs in one cross-validation iteration.
+Figure ref:fig:microconstituentresults shows microconstituent annotations and predictions for the four validation set micrographs in one cross-validation iteration; results for all six validation sets are included in the online supplemental materials.
 The predictions show reasonable correspondence with the annotations despite nontrivial differences in features such as particle size and appearance that arise from differences in heat treatment and magnification.
 Intensity variations and polishing damage evident in the input images have little impact on the predictive capability of the model.
 One notable exception is the cluster of spurious network predictions associated with the damaged areas in the lower left of Figure ref:fig:microconstituentresults c.
@@ -211,13 +217,14 @@ This phenomenon is evident in the lower half of Figure ref:fig:microconstituentr
 \begin{figure}[!htbp]
   % \includegraphics[width=\textwidth]{validation_predictions_uhcs_03}
   \includegraphics[width=\textwidth]{uhcs_predictions_separate_run3}
-  \caption{(a-d) Validation set micrographs, (e-h) microconstituent annotations, and (i-l) PixelNet predictions for the complex microconstituent segmentation task. Scale bars indicate $10 \mu m$.}
+  \caption{(a-d) Validation set micrographs, (e-h) microconstituent annotations, and (i-l) PixelNet predictions for the complex microconstituent segmentation task. Microstructural constituents include proeutectoid grain boundary cementite (light blue), ferritic matrix (dark blue), spheroidite particles (yellow), and Widmanstätten cementite (green). Scale bars indicate $10 \mu m$.}
   \label{fig:microconstituentresults}
 \end{figure}
 
 *** Quantitative results :ignore:
 Table ref:tab:semanticsegmentationperf shows the average validation set performance with standard errors for the semantic microstructure segmentation task.
-The pixelnet models obtain 86.5 $\pm$ 1.6 % overall accuracy (AC) in reproducing the pixel-level annotations, with mean average precision (mAP) of 80.1 $\pm$ 2.7%.
+The pixelnet models obtain 86.5 $\pm$ 1.6 % overall accuracy (AC, equivalent to the average of the classwise recall or precision) in reproducing the pixel-level annotations.
+# , with mean average precision (mAP) of 80.1 $\pm$ 2.7%.
 The models are consistently good at identifying spheroidite and network regions.
 The less prevalent microconstituents (matrix and {{{ws}}}) are not as well captured, and show higher variation between images.
 For these microconstituents, the recall score is better than the precision score, meaning that the CNN tends to mistake other classes for matrix and {{{ws}}} more than it tends to miss genuine matrix and {{{ws}}} pixels.
@@ -225,12 +232,12 @@ This effect is demonstrated on the fine {{{ws}}} lath in the lower right portion
 The low proportion of {{{ws}}} pixels in the dataset enhances this effect.
 In the case of the matrix class, the difference in recall and precision scores is partly due to the overprediction of metallic matrix in areas containing a low density of spheroidite particles, as discussed in reference to Figure ref:fig:microconstituentresults i.
 
-In contrast, the 'easier' classes have slightly higher precision compared with their recall scores.
-The standard error for the network scores is large, and is therefore likely accounted for by the small number of gross errors previously discussed in supplemental Figures S1.1 d and S1.5 d.
+In contrast, the spheroidite and network classes have slightly higher precision compared with their recall scores.
+The standard error for the network scores is large, and is therefore likely accounted for by the small number of gross errors discussed in supplemental Figures S1.1 d and S1.5 d.
 Finally, the small difference in precision and recall score for the spheroidite class is likely also due to the overprediction of the metal matrix in regions with low particle density.
 
 These quantitative metrics are useful for interpreting the strengths and weaknesses of a particular CNN model, but they do not necessarily directly quantify the quality of the predicted segmentation maps due to inherent subjectivity and bias in the labeling process.
-Even a single human annotator will not be able to consistently label an entire dataset, especially for ambiguous higher-level microconstituents such as the present spheroidite class.
+Even a single human annotator will not be able to consistently label an entire dataset, especially for ambiguous higher-level microconstituents such as the  spheroidite class.
 For example, the annotator must decide how closely to track cementite particles when tracing out the edge of the denuded zone.
 In some cases, it is unclear whether a carbide should be labeled as grain boundary cementite or as a piece of {{{ws}}} lath.
 
@@ -252,23 +259,23 @@ Many of the {{{ws}}} lath in this dataset are just a few pixels wide, which can 
 #+CAPTION: Semantic segmentation performance averaged over validation images. Uncertainties are standard errors calculated across validation images.
 #+NAME: tab:semanticsegmentationperf
 #+ATTR_LATEX: :align lcccc
-|               | IU             | precision      | recall         | AP             |
-|---------------+----------------+----------------+----------------+----------------|
-| matrix        | 49.1 $\pm$ 3.4 | 60.3 $\pm$ 4.4 | 72.3 $\pm$ 3.7 | 69.5 $\pm$ 4.3 |
-| network       | 72.9 $\pm$ 5.3 | 85.5 $\pm$ 4.0 | 80.7 $\pm$ 5.9 | 90.6 $\pm$ 4.3 |
-| spheroidite   | 85.7 $\pm$ 1.8 | 95.1 $\pm$ 1.2 | 89.8 $\pm$ 1.7 | 98.1 $\pm$ 0.5 |
-| widmanstatten | 42.7 $\pm$ 2.9 | 50.2 $\pm$ 3.6 | 73.5 $\pm$ 3.9 | 62.4 $\pm$ 4.0 |
-|---------------+----------------+----------------+----------------+----------------|
-| overall       | 62.6 $\pm$ 2.5 | 86.5 $\pm$ 1.6 | 86.5 $\pm$ 1.6 | 80.1 $\pm$ 2.7 |
+|               | IU             | precision      | recall         |
+|---------------+----------------+----------------+----------------+
+| matrix        | 49.1 $\pm$ 3.4 | 60.3 $\pm$ 4.4 | 72.3 $\pm$ 3.7 |
+| network       | 72.9 $\pm$ 5.3 | 85.5 $\pm$ 4.0 | 80.7 $\pm$ 5.9 |
+| spheroidite   | 85.7 $\pm$ 1.8 | 95.1 $\pm$ 1.2 | 89.8 $\pm$ 1.7 |
+| widmanstatten | 42.7 $\pm$ 2.9 | 50.2 $\pm$ 3.6 | 73.5 $\pm$ 3.9 |
+|---------------+----------------+----------------+----------------+
+| overall       | 62.6 $\pm$ 2.5 | 86.5 $\pm$ 1.6 | 86.5 $\pm$ 1.6 |
 
-** Spheroidite particle segmentation \label{ref:sec:particles}
+** Spheroidite particle segmentation \label{sec:particles}
 *** Qualitative results  :ignore:
-Figure ref:fig:spheroiditeresults shows some validation results for the individual particle segmentation task, with numerical performance reported in Tables ref:tab:particleperf and ref:tab:particlesegmentationperf.
+Figure ref:fig:spheroiditeresults shows some validation results for the individual particle segmentation task, with numerical performance reported in Tables ref:tab:particleperf and ref:tab:particlesegmentationperf; additional examples are included in the online supplemental materials.
 Particle predictions are overlaid in red on the input micrographs (a-d).
 The second row (e-h) shows the empirical particle size distributions for both particle predictions and annotations, as well as the results of the two-sample Kolmogorov-Smirnov hypothesis test for distribution equivalence.
 Predictions for larger particles relative to the image frame (Figures ref:fig:spheroiditeresults b and c) are consistently good, even where contrast gradients across particles and non-trivial background structure challenge thresholding and edge-based segmentation methods.
 The primary failure mode of the particle segmentation model is underprediction of very small particles, particularly in Figure ref:fig:spheroiditeresults a and d.
-The vast majority of the fine particles in Figure ref:fig:spheroiditeresults are missing entirely, and many are only partially labeled by the CNN with just one or two foreground pixels.o
+The vast majority of the fine particles in Figure ref:fig:spheroiditeresults are missing entirely, and many are only partially labeled by the CNN with just one or two foreground pixels.
 These particles are typically one to five pixels in size, suggesting that higher- or multi-resolution inputs are necessary for general microstructure segmentation CNNs.
 However, the CNN does avoid spuriously labeling the small segments of {{{ws}}} in Figure ref:fig:spheroiditeresults as particles.
 
@@ -298,25 +305,25 @@ An additional source of bias stems from the application of the watershed algorit
 #+CAPTION: Particle segmentation performance averaged over validation images. Uncertainties are standard errors calculated across validation images.
 #+NAME: tab:particleperf
 #+ATTR_LATEX: :align lcccc
-|             | IU             | precision      | recall         | AP             |
-|-------------+----------------+----------------+----------------+----------------|
-| matrix      | 90.0 $\pm$ 1.0 | 95.0 $\pm$ 0.6 | 94.5 $\pm$ 1.1 | 98.2 $\pm$ 0.5 |
-| spheroidite | 54.8 $\pm$ 3.4 | 74.6 $\pm$ 2.8 | 70.3 $\pm$ 4.3 | 77.4 $\pm$ 3.0 |
-|-------------+----------------+----------------+----------------+----------------|
-| overall     | 72.4 $\pm$ 3.1 | 91.1 $\pm$ 0.9 | 91.1 $\pm$ 0.9 | 87.8 $\pm$ 1.8 |
+|             | IU             | precision      | recall         |
+|-------------+----------------+----------------+----------------+
+| matrix      | 90.0 $\pm$ 1.0 | 95.0 $\pm$ 0.6 | 94.5 $\pm$ 1.1 |
+| spheroidite | 54.8 $\pm$ 3.4 | 74.6 $\pm$ 2.8 | 70.3 $\pm$ 4.3 |
+|-------------+----------------+----------------+----------------+
+| overall     | 72.4 $\pm$ 3.1 | 91.1 $\pm$ 0.9 | 91.1 $\pm$ 0.9 |
 
 
-#+CAPTION: Intersection over Union (IU) scores on particle segmentation validation images. Uncertainties are standard errors calculated across validation images.
+#+CAPTION: Particle segmentation performance metrics. Uncertainties are standard errors calculated across validation images.
 #+NAME: tab:particlesegmentationperf
 #+ATTR_LATEX: :align lccccc
-| model    | matrix         | spheroidite     | IU_{avg}       | AC             | PSD KS |
-|----------+----------------+-----------------+----------------+----------------+--------|
-| otsu     | 86.2 $\pm$ 7.2 | 53.7 $\pm$ 12.1 | 69.9 $\pm$ 9.3 | 88.1 $\pm$ 6.1 | -      |
-|----------+----------------+-----------------+----------------+----------------+--------|
-| pixelnet | 90.0 $\pm$ 1.0 | 54.8 $\pm$ 3.4  | 72.4 $\pm$ 3.1 | 91.1 $\pm$ 0.9 | 0.042  |
+| model    | IU_{matrix}    | IU_{spheroidite} | IU_{avg}       | AC             | PSD KS |
+|----------+----------------+------------------+----------------+----------------+--------|
+| otsu     | 86.2 $\pm$ 7.2 | 53.7 $\pm$ 12.1  | 69.9 $\pm$ 9.3 | 88.1 $\pm$ 6.1 | -      |
+|----------+----------------+------------------+----------------+----------------+--------|
+| pixelnet | 90.0 $\pm$ 1.0 | 54.8 $\pm$ 3.4   | 72.4 $\pm$ 3.1 | 91.1 $\pm$ 0.9 | 0.042  |
 
 *** model misses small particles --> low KS score :ignore:
-Despite good numerical performance on the particle segmentation task, the KS test suggests we reject the null hypothesis that the predicted and ground truth particle size distributions are equivalent for just one of the 24 validation micrographs (shown in ref:fig:spheroiditeresults b).
+Despite good numerical performance on the particle segmentation task, the KS test suggests we reject the null hypothesis that the predicted and ground truth particle size distributions are equivalent for all but one of the 24 validation micrographs (shown in ref:fig:spheroiditeresults b).
 The difficulty in detecting small particles explains the discrepancies between empirical particle size distributions that contribute to the KS score.
 For the two validation micrographs in Figure ref:fig:spheroiditeresults containing fine particles, the particle size histograms and prediction maps show that the model often entirely misses particles with radii smaller than 5px.
 Many of these missing ~5px particles are partially labeled in the CNN predictions, leading to a severe overrepresentation of single-pixel particles, especially in Figure ref:fig:spheroiditeresults h.
@@ -339,8 +346,8 @@ However, higher quality input and training micrographs will mitigate this effect
 
 \begin{figure}[!htbp]
   % \includegraphics[width=\textwidth]{combined_model_run01}
-  \includegraphics[width=\textwidth]{uhcs_predictions_joint_psd_run4}
-  \caption{(a-d) Validation set microconstituent predictions with (e-h) derived particle size distributions obtained by applying the particle segmentation CNN to the semantic microstructure segmentation dataset. Scale bars indicate $10 \mu m$.}
+  \includegraphics[width=\textwidth]{uhcs_predictions_joint_psd_3col_run4}
+  \caption{(a-d) Micrographs with (e-h) validation set microconstituent predictions and (i-l) derived particle size distributions obtained by applying the particle segmentation CNN to the semantic microstructure segmentation dataset. Scale bars indicate $10 \mu m$.}
   \label{fig:fused}
 \end{figure}
 
