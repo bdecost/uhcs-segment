@@ -1,11 +1,9 @@
 uhcs-segment
-Code and data for UHCS segmentation tasks
+------------
 
-``` sh
-git clone hippolyta:/home/holmlab/code/uhcs-segment
-cd uhcs-segment
-scp -r 'hippolyta:/home/holmlab/microstructure-datasets/uhcs-segment/*' ./
-```
+Training scripts for ultrahigh carbon steel segmentation paper ([doi:10.1017/S1431927618015635](https://www.dx.doi.org/10.1017/S1431927618015635), [arxiv:1805.08693](https://www.arxiv.org/abs/1805.08693))
+
+The datasets and annotations are available at https://hdl.handle.net/11256/964
 
 
 ```
